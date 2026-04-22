@@ -58,7 +58,7 @@
     z-index:0;
   }
 
-  .app { position:relative; z-index:1; max-width:1340px; margin:0 auto; padding:20px; }
+  .app { position:relative; z-index:1; max-width:150000px; margin:0 auto; padding:20px; }
 
   /* ===================== HEADER ===================== */
   header {
@@ -926,7 +926,7 @@
     </div>
 
     <div class="header-right">
-      <div class="coin-wallet" onclick="showView('rewards')">🦏 <span id="wallet-coins">340</span></div>
+      <div class="coin-wallet" onclick="showView('rewards')">🦏 <span id="wallet-coins">50000</span></div>
       <div class="live-badge"><div class="live-dot"></div> Live</div>
     </div>
   </header>
@@ -973,7 +973,7 @@
             <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-cyan)">1:38</div><div class="kpi-lbl">Avg RT</div></div>
             <div class="kpi-box"><div class="kpi-val" style="color:var(--purple-bright)">4.9</div><div class="kpi-lbl">CSAT</div></div>
             <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-red)">2</div><div class="kpi-lbl">Escalations</div></div>
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--magenta)">340</div><div class="kpi-lbl">Coins</div></div>
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--magenta)">50000</div><div class="kpi-lbl">Coins</div></div>
             <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">#3</div><div class="kpi-lbl">Rank</div></div>
           </div>
           <button class="btn btn-primary" onclick="triggerCelebration('Wayne', 'top CSAT score', 50)">🎉 Claim Daily Bonus (+50 coins)</button>
@@ -1296,7 +1296,7 @@
 let agents = [
   { name:'Mihail', emoji:'👑', role:'Senior Agent', chats:62, rt:'1:22', csat:4.95, coins:520, score:980 },
   { name:'Stefan', emoji:'⚡', role:'Support Agent', chats:57, rt:'1:28', csat:4.85, coins:440, score:890 },
-  { name:'Wayne',  emoji:'🎯', role:'Support Agent', chats:48, rt:'1:38', csat:4.90, coins:340, score:810 },
+  { name:'Wayne',  emoji:'🎯', role:'Support Agent', chats:48, rt:'1:38', csat:4.90, coins:50000, score:810 },
   { name:'Stasi',  emoji:'💎', role:'VIP Support',   chats:44, rt:'1:45', csat:4.92, coins:310, score:775 },
   { name:'Vesna',  emoji:'🔥', role:'Support Agent', chats:39, rt:'1:55', csat:4.75, coins:280, score:690 },
   { name:'Dimitar',emoji:'🚀', role:'Senior Agent',  chats:35, rt:'2:05', csat:4.70, coins:240, score:610 },
@@ -1597,7 +1597,7 @@ function showAdminTab(tab) {
   if(tab==='competition') renderAdminCompList();
 }
 
-let walletCoins = 340;
+let walletCoins = 50000;
 
 function triggerCelebration(name, reason, coins) {
   const emojis = ['🦏','🏆','🎰','🎉','💎','⭐','👑'];
