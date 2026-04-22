@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casino Support Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD700;
+    --gold-dim: #B8960C;
+    --neon-green: #00FF88;
+    --neon-blue: #00C8FF;
+    --neon-red: #FF3366;
+    --bg-deep: #050810;
+    --bg-card: #0D1527;
+    --bg-card2: #111A30;
+    --border: rgba(255,215,0,0.2);
+    --text: #E8E8F0;
+    --text-dim: #8090A8;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image: 
+      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  body::after {
+    content:'';
+    position:fixed;
+    top:-50%;
+    left:-20%;
+    width:70%;
+    height:120%;
+    background: radial-gradient(ellipse, rgba(255,215,0,0.04) 0%, transparent 65%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ===================== LAYOUT ===================== */
+  .app { position:relative; z-index:1; max-width:1300px; margin:0 auto; padding:20px; }
+
+  /* ===================== HEADER ===================== */
+  header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 28px;
+    background: linear-gradient(135deg, rgba(13,21,39,0.95), rgba(17,26,48,0.95));
+    border:1px solid var(--border);
+    border-radius:16px;
+    margin-bottom:28px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 40px rgba(255,215,0,0.06), inset 0 1px 0 rgba(255,215,0,0.1);
+  }
+
+  .logo {
+    font-family:'Orbitron', monospace;
+    font-size:1.3rem;
+    font-weight:900;
+    letter-spacing:2px;
+    background: linear-gradient(90deg, var(--gold), var(--neon-blue));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    text-transform:uppercase;
+  }
+
+  .logo span { color: var(--neon-green); -webkit-text-fill-color: var(--neon-green); }
+
+  .header-right { display:flex; align-items:center; gap:16px; }
+
+  .live-badge {
+    display:flex; align-items:center; gap:6px;
+    background: rgba(255,51,102,0.15);
+    border:1px solid var(--neon-red);
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:0.75rem;
+    font-weight:700;
+    letter-spacing:1px;
+    color: var(--neon-red);
+    text-transform:uppercase;
+  }
+
+  .live-dot {
+    width:7px; height:7px;
+    background: var(--neon-red);
+    border-radius:50%;
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.4; transform:scale(1.4); }
+  }
+
+  .nav-tabs {
+    display:flex; gap:4px;
+    background: rgba(255,255,255,0.04);
+    border-radius:10px;
+    padding:4px;
+  }
+
+  .nav-tab {
+    padding:7px 18px;
+    border:none;
+    background:transparent;
+    color: var(--text-dim);
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    font-size:0.9rem;
+    letter-spacing:0.5px;
+    border-radius:8px;
+    cursor:pointer;
+    transition: all 0.2s;
+    text-transform:uppercase;
+  }
+
+  .nav-tab.active {
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,200,255,0.15));
+    color: var(--gold);
+    border:1px solid rgba(255,215,0,0.3);
+  }
+
+  .nav-tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.06); }
+
+  /* ===================== VIEWS ===================== */
+  .view { display:none; }
+  .view.active { display:block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ===================== STATS ROW ===================== */
+  .stats-row {
+    display:grid; grid-template-columns: repeat(4,1fr); gap:16px; margin-bottom:28px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px 22px;
+    position:relative;
+    overflow:hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .stat-card:hover { transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+
+  .stat-card::before {
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+    background: var(--accent, var(--gold));
+    opacity:0.7;
+  }
+
+  .stat-card .icon {
+    font-size:1.6rem; margin-bottom:8px;
+  }
+
+  .stat-card .value {
+    font-family:'Orbitron', monospace;
+    font-size:1.9rem;
+    font-weight:700;
+    color: var(--accent, var(--gold));
+    line-height:1;
+  }
+
+  .stat-card .label {
+    font-size:0.78rem;
+    color: var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-top:4px;
+  }
+
+  .stat-card .change {
+    font-size:0.8rem;
+    color: var(--neon-green);
+    font-weight:600;
+    margin-top:4px;
+  }
+
+  /* ===================== LEADERBOARD ===================== */
+  .section-title {
+    font-family:'Orbitron', monospace;
+    font-size:0.85rem;
+    font-weight:700;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color: var(--text-dim);
+    margin-bottom:16px;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .section-title::after {
+    content:'';
+    flex:1;
+    height:1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  .main-grid {
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:20px;
+    margin-bottom:28px;
+  }
+
+  .leaderboard-card {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px;
+    overflow:hidden;
+  }
+
+  .leaderboard-item {
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 14px;
+    border-radius:12px;
+    margin-bottom:8px;
+    cursor:pointer;
+    transition: background 0.2s, transform 0.2s;
+    position:relative;
+  }
+
+  .leaderboard-item:hover { background: rgba(255,255,255,0.04); transform:translateX(4px); }
+
+  .leaderboard-item.rank-1 { background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,215,0,0.04)); border:1px solid rgba(255,215,0,0.25); }
+  .leaderboard-item.rank-2 { background: linear-gradient(135deg, rgba(192,192,192,0.08), transparent); border:1px solid rgba(192,192,192,0.15); }
+  .leaderboard-item.rank-3 { background: linear-gradient(135deg, rgba(205,127,50,0.08), transparent); border:1px solid rgba(205,127,50,0.15); }
+
+  .rank-badge {
+    font-family:'Orbitron', monospace;
+    font-size:0.7rem;
+    font-weight:900;
+    width:32px; height:32px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+    flex-shrink:0;
+  }
+
+  .rank-1 .rank-badge { background: rgba(255,215,0,0.2); color: var(--gold); }
+  .rank-2 .rank-badge { background: rgba(192,192,192,0.15); color: #C0C0C0; }
+  .rank-3 .rank-badge { background: rgba(205,127,50,0.15); color: #CD7F32; }
+  .leaderboard-item:not(.rank-1):not(.rank-2):not(.rank-3) .rank-badge { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+  .avatar {
+    width:38px; height:38px;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem;
+    background: linear-gradient(135deg, rgba(0,200,255,0.2), rgba(255,215,0,0.15));
+    flex-shrink:0;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+
+  .agent-info { flex:1; min-width:0; }
+  .agent-name { font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .agent-role { font-size:0.72rem; color: var(--text-dim); }
+
+  .agent-score {
+    text-align:right;
+    flex-shrink:0;
+  }
+
+  .score-val {
+    font-family:'Orbitron', monospace;
+    font-size:1.1rem;
+    font-weight:700;
+    color: var(--gold);
+  }
+
+  .score-label { font-size:0.68rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
+
+  .progress-bar-wrap { margin-top:5px; }
+  .progress-bar-bg { height:4px; background: rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+  .progress-bar-fill { height:100%; border-radius:2px; transition: width 0.8s ease; }
+
+  /* ===================== COMPETITIONS ===================== */
+  .competitions-grid {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:16px;
+    margin-bottom:28px;
+  }
+
+  .comp-card {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .comp-card:hover { transform:translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+  .comp-card::after {
+    content:'';
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:80px;
+    background: linear-gradient(to top, rgba(0,200,255,0.04), transparent);
+    pointer-events:none;
+  }
+
+  .comp-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+
+  .comp-title { font-family:'Orbitron', monospace; font-size:0.85rem; font-weight:700; color: var(--neon-blue); }
+
+  .comp-badge {
+    font-size:0.65rem;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:6px;
+    background: rgba(0,255,136,0.15);
+    color: var(--neon-green);
+    border:1px solid rgba(0,255,136,0.3);
+  }
+
+  .comp-badge.ended { background: rgba(255,51,102,0.1); color: var(--neon-red); border-color: rgba(255,51,102,0.3); }
+
+  .comp-desc { font-size:0.88rem; color: var(--text-dim); margin-bottom:14px; line-height:1.5; }
+
+  .comp-leader {
+    display:flex; align-items:center; gap:10px;
+    background: rgba(255,215,0,0.07);
+    border:1px solid rgba(255,215,0,0.15);
+    border-radius:10px;
+    padding:10px 12px;
+    margin-bottom:12px;
+  }
+
+  .comp-leader .crown { font-size:1.1rem; }
+  .comp-leader-info { flex:1; }
+  .comp-leader-name { font-weight:700; font-size:0.9rem; }
+  .comp-leader-score { font-size:0.75rem; color: var(--gold); }
+
+  .comp-footer { display:flex; justify-content:space-between; align-items:center; }
+  .comp-time { font-size:0.75rem; color: var(--text-dim); display:flex; align-items:center; gap:5px; }
+  .comp-prize { font-size:0.8rem; color: var(--gold); font-weight:700; }
+
+  /* ===================== MISSIONS ===================== */
+  .missions-list { display:flex; flex-direction:column; gap:12px; }
+
+  .mission-item {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 18px;
+    display:flex; align-items:center; gap:16px;
+    transition: transform 0.2s;
+  }
+
+  .mission-item:hover { transform:translateX(4px); }
+
+  .mission-icon {
+    font-size:1.5rem;
+    width:48px; height:48px;
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(255,215,0,0.1));
+    border:1px solid rgba(255,255,255,0.08);
+    flex-shrink:0;
+  }
+
+  .mission-info { flex:1; }
+  .mission-title { font-weight:700; font-size:0.95rem; margin-bottom:3px; }
+  .mission-desc { font-size:0.8rem; color: var(--text-dim); }
+
+  .mission-progress-wrap { width:120px; flex-shrink:0; text-align:right; }
+  .mission-pct { font-family:'Orbitron', monospace; font-size:0.9rem; font-weight:700; color: var(--neon-green); }
+  .mission-bar-bg { height:5px; background: rgba(255,255,255,0.07); border-radius:3px; margin-top:5px; overflow:hidden; }
+  .mission-bar-fill { height:100%; background: linear-gradient(90deg, var(--neon-green), var(--neon-blue)); border-radius:3px; }
+
+  .mission-coins { font-size:0.8rem; color: var(--gold); font-weight:600; margin-top:3px; }
+
+  /* ===================== BATTLES ===================== */
+  .battles-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+  .battle-card {
+    background: var(--bg-card);
+    border:1px solid rgba(255,51,102,0.2);
+    border-radius:16px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+    text-align:center;
+  }
+
+  .battle-card::before {
+    content:'VS';
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Orbitron', monospace;
+    font-size:1.5rem;
+    font-weight:900;
+    color: var(--neon-red);
+    opacity:0.25;
+    letter-spacing:4px;
+    pointer-events:none;
+  }
+
+  .battle-header { font-family:'Orbitron', monospace; font-size:0.75rem; color: var(--neon-red); letter-spacing:2px; margin-bottom:14px; }
+
+  .battle-contestants { display:flex; justify-content:space-around; align-items:center; gap:10px; margin-bottom:14px; }
+
+  .contestant { text-align:center; }
+  .contestant .avatar { margin: 0 auto 8px; width:44px; height:44px; font-size:1.3rem; }
+  .contestant-name { font-weight:700; font-size:0.85rem; }
+  .contestant-score { font-family:'Orbitron', monospace; font-size:1.1rem; color: var(--neon-blue); }
+
+  .battle-goal { font-size:0.8rem; color: var(--text-dim); margin-bottom:12px; }
+
+  .battle-bar-wrap {
+    height:8px;
+    background: rgba(255,255,255,0.06);
+    border-radius:4px;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .battle-bar-a {
+    position:absolute;
+    left:0; top:0; bottom:0;
+    background: linear-gradient(90deg, var(--neon-blue), rgba(0,200,255,0.5));
+    border-radius:4px;
+    transition: width 1s ease;
+  }
+
+  .battle-bar-b {
+    position:absolute;
+    right:0; top:0; bottom:0;
+    background: linear-gradient(270deg, var(--neon-red), rgba(255,51,102,0.5));
+    border-radius:4px;
+    transition: width 1s ease;
+  }
+
+  /* ===================== REWARDS ===================== */
+  .rewards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+
+  .reward-card {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor:pointer;
+  }
+
+  .reward-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(255,215,0,0.12); }
+
+  .reward-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background: radial-gradient(ellipse at top, rgba(255,215,0,0.06), transparent 60%);
+    pointer-events:none;
+  }
+
+  .reward-icon { font-size:2.5rem; margin-bottom:12px; }
+  .reward-name { font-weight:700; font-size:1rem; margin-bottom:6px; }
+  .reward-desc { font-size:0.8rem; color: var(--text-dim); margin-bottom:14px; line-height:1.4; }
+  .reward-cost {
+    display:inline-flex; align-items:center; gap:6px;
+    background: rgba(255,215,0,0.12);
+    border:1px solid rgba(255,215,0,0.3);
+    padding:6px 14px;
+    border-radius:20px;
+    font-family:'Orbitron', monospace;
+    font-size:0.8rem;
+    color: var(--gold);
+    font-weight:700;
+  }
+
+  /* ===================== ADMIN ===================== */
+  .admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+  .admin-card {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:22px;
+  }
+
+  .admin-card h3 {
+    font-family:'Orbitron', monospace;
+    font-size:0.8rem;
+    letter-spacing:2px;
+    color: var(--neon-blue);
+    text-transform:uppercase;
+    margin-bottom:16px;
+  }
+
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:0.78rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px; display:block; }
+
+  .form-input {
+    width:100%;
+    background: rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;
+    padding:10px 14px;
+    color: var(--text);
+    font-family:'Rajdhani', sans-serif;
+    font-size:0.95rem;
+    outline:none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--neon-blue); }
+
+  .form-select {
+    width:100%;
+    background: rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;
+    padding:10px 14px;
+    color: var(--text);
+    font-family:'Rajdhani', sans-serif;
+    font-size:0.95rem;
+    outline:none;
+    cursor:pointer;
+    appearance:none;
+  }
+
+  .form-select option { background: #111; color: #fff; }
+
+  .btn {
+    padding:10px 20px;
+    border:none;
+    border-radius:10px;
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:0.9rem;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    transition: all 0.2s;
+    text-transform:uppercase;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), #E6A800);
+    color: #0D1527;
+    width:100%;
+  }
+
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(255,215,0,0.3); }
+
+  .btn-danger {
+    background: linear-gradient(135deg, var(--neon-red), #CC0044);
+    color: white;
+  }
+
+  .btn-danger:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(255,51,102,0.3); }
+
+  .btn-outline {
+    background: transparent;
+    border:1px solid var(--neon-blue);
+    color: var(--neon-blue);
+  }
+
+  /* ===================== ALERTS FEED ===================== */
+  .alerts-feed {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+    max-height:320px;
+    overflow-y:auto;
+  }
+
+  .alerts-feed::-webkit-scrollbar { width:4px; }
+  .alerts-feed::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+  .alerts-feed::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.3); border-radius:2px; }
+
+  .alert-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    animation: slideIn 0.4s ease;
+  }
+
+  @keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+
+  .alert-item:last-child { border-bottom:none; }
+  .alert-icon { font-size:1.2rem; flex-shrink:0; }
+  .alert-msg { font-size:0.88rem; color: var(--text); flex:1; }
+  .alert-msg strong { color: var(--gold); }
+  .alert-time { font-size:0.72rem; color: var(--text-dim); flex-shrink:0; }
+
+  /* ===================== CELEBRATION OVERLAY ===================== */
+  #celebration {
+    position:fixed; inset:0; z-index:1000;
+    background: rgba(5,8,16,0.92);
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+  }
+
+  #celebration.show { display:flex; animation: fadeIn 0.3s ease; }
+
+  .celebration-content {
+    background: var(--bg-card);
+    border:2px solid var(--gold);
+    border-radius:24px;
+    padding:48px 56px;
+    max-width:500px;
+    position:relative;
+  }
+
+  .celebration-emoji { font-size:4rem; margin-bottom:16px; animation: bounce 0.6s ease infinite alternate; }
+
+  @keyframes bounce { from { transform:translateY(0); } to { transform:translateY(-12px); } }
+
+  .celebration-title {
+    font-family:'Orbitron', monospace;
+    font-size:1.8rem;
+    font-weight:900;
+    background: linear-gradient(90deg, var(--gold), var(--neon-blue));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    margin-bottom:8px;
+  }
+
+  .celebration-sub { color: var(--text-dim); margin-bottom:20px; font-size:1rem; }
+  .celebration-coins { font-family:'Orbitron', monospace; font-size:1.4rem; color: var(--gold); margin-bottom:24px; }
+
+  .confetti-pieces {
+    position:absolute; inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    border-radius:24px;
+  }
+
+  .confetti-piece {
+    position:absolute;
+    width:8px; height:8px;
+    border-radius:1px;
+    animation: confettiFall linear forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity:1; }
+    100% { transform: translateY(300px) rotate(720deg); opacity:0; }
+  }
+
+  /* ===================== AGENT SCORECARD ===================== */
+  .scorecard-panel {
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+  }
+
+  .kpi-row {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .kpi-box {
+    background: rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:10px;
+    padding:14px;
+    text-align:center;
+  }
+
+  .kpi-val {
+    font-family:'Orbitron', monospace;
+    font-size:1.4rem;
+    font-weight:700;
+  }
+
+  .kpi-lbl { font-size:0.7rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:0.8px; margin-top:3px; }
+
+  /* ===================== COIN WALLET ===================== */
+  .coin-wallet {
+    display:flex; align-items:center; gap:8px;
+    background: rgba(255,215,0,0.08);
+    border:1px solid rgba(255,215,0,0.25);
+    padding:8px 14px;
+    border-radius:10px;
+    font-family:'Orbitron', monospace;
+    font-size:1rem;
+    font-weight:700;
+    color: var(--gold);
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+
+  .coin-wallet:hover { background: rgba(255,215,0,0.14); }
+
+  /* ===================== RESPONSIVE ===================== */
+  @media(max-width:900px) {
+    .stats-row { grid-template-columns:1fr 1fr; }
+    .main-grid, .competitions-grid, .battles-grid, .admin-grid { grid-template-columns:1fr; }
+    .rewards-grid { grid-template-columns:1fr 1fr; }
+    .kpi-row { grid-template-columns:1fr 1fr; }
+  }
+
+  @media(max-width:600px) {
+    .nav-tabs { display:none; }
+    .rewards-grid { grid-template-columns:1fr; }
+    .kpi-row { grid-template-columns:1fr; }
+  }
+
+  /* scrollbar global */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.2); border-radius:3px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">Casino<span>⚡</span>Arena</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showView('dashboard')">Dashboard</button>
+      <button class="nav-tab" onclick="showView('competitions')">Competitions</button>
+      <button class="nav-tab" onclick="showView('missions')">Missions</button>
+      <button class="nav-tab" onclick="showView('battles')">Battles</button>
+      <button class="nav-tab" onclick="showView('rewards')">Rewards</button>
+      <button class="nav-tab" onclick="showView('admin')">Admin</button>
+    </div>
+    <div class="header-right">
+      <div class="coin-wallet" onclick="showView('rewards')">🪙 <span id="wallet-coins">340</span></div>
+      <div class="live-badge"><div class="live-dot"></div> Live</div>
+    </div>
+  </header>
+
+  <!-- ========== DASHBOARD ========== -->
+  <div class="view active" id="view-dashboard">
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card" style="--accent:var(--gold)">
+        <div class="icon">🏆</div>
+        <div class="value" id="stat-chats">1,247</div>
+        <div class="label">Chats Resolved Today</div>
+        <div class="change">↑ +12% vs yesterday</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--neon-green)">
+        <div class="icon">⚡</div>
+        <div class="value" id="stat-time">1m 42s</div>
+        <div class="label">Avg Response Time</div>
+        <div class="change">↓ 18% faster</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--neon-blue)">
+        <div class="icon">⭐</div>
+        <div class="value" id="stat-csat">4.8</div>
+        <div class="label">CSAT Score</div>
+        <div class="change">↑ +0.3 this week</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--neon-red)">
+        <div class="icon">🔥</div>
+        <div class="value" id="stat-streak">7</div>
+        <div class="label">Team Win Streak</div>
+        <div class="change">Days above target</div>
+      </div>
+    </div>
+
+    <!-- Main Grid: Leaderboard + Alerts -->
+    <div class="main-grid">
+      <div class="leaderboard-card">
+        <div class="section-title">🏅 Live Leaderboard</div>
+        <div id="leaderboard-list"></div>
+      </div>
+      <div>
+        <div class="scorecard-panel" style="margin-bottom:20px;">
+          <div class="section-title">📊 Your Scorecard — Alex</div>
+          <div class="kpi-row">
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">48</div><div class="kpi-lbl">Chats</div></div>
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-blue)">1:38</div><div class="kpi-lbl">Avg RT</div></div>
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--gold)">4.9</div><div class="kpi-lbl">CSAT</div></div>
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-red)">2</div><div class="kpi-lbl">Escalations</div></div>
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--gold)">340</div><div class="kpi-lbl">Coins</div></div>
+            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">#3</div><div class="kpi-lbl">Rank</div></div>
+          </div>
+          <button class="btn btn-primary" onclick="triggerCelebration('Alex', 'top CSAT score', 50)">🎉 Claim Daily Bonus (+50 coins)</button>
+        </div>
+        <div class="alerts-feed">
+          <div class="section-title">📡 Live Feed</div>
+          <div id="alerts-feed-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== COMPETITIONS ========== -->
+  <div class="view" id="view-competitions">
+    <div class="section-title" style="margin-bottom:20px;">🏁 Active Competitions</div>
+    <div class="competitions-grid" id="competitions-grid"></div>
+  </div>
+
+  <!-- ========== MISSIONS ========== -->
+  <div class="view" id="view-missions">
+    <div class="section-title" style="margin-bottom:20px;">🎯 Daily Missions</div>
+    <div class="missions-list" id="missions-list"></div>
+  </div>
+
+  <!-- ========== BATTLES ========== -->
+  <div class="view" id="view-battles">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;">⚔️ Agent Battles</div>
+      <button class="btn btn-danger" onclick="startBattle()">⚔️ Challenge Someone (50 🪙)</button>
+    </div>
+    <div class="battles-grid" id="battles-grid"></div>
+  </div>
+
+  <!-- ========== REWARDS ========== -->
+  <div class="view" id="view-rewards">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:0;">🛍️ Reward Store</div>
+      <div class="coin-wallet">🪙 <span id="wallet-coins2">340</span> coins</div>
+    </div>
+    <div class="rewards-grid" id="rewards-grid"></div>
+  </div>
+
+  <!-- ========== ADMIN ========== -->
+  <div class="view" id="view-admin">
+    <div class="section-title" style="margin-bottom:20px;">⚙️ Admin Panel</div>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Launch Competition</h3>
+        <div class="form-group">
+          <label class="form-label">Competition Name</label>
+          <input class="form-input" type="text" placeholder="e.g. Speed King — Weekend Blitz" id="new-comp-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">KPI to Track</label>
+          <select class="form-select" id="new-comp-kpi">
+            <option>Chats Resolved</option>
+            <option>Average Response Time</option>
+            <option>CSAT Score</option>
+            <option>High-Rated Chats</option>
+            <option>First Reply Time</option>
+            <option>Escalations Prevented</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration</label>
+          <select class="form-select" id="new-comp-duration">
+            <option>Today Only</option>
+            <option>3 Days</option>
+            <option>This Week</option>
+            <option>This Month</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prize</label>
+          <input class="form-input" type="text" placeholder="e.g. €50 voucher, 500 coins, Extra day off" id="new-comp-prize">
+        </div>
+        <button class="btn btn-primary" onclick="launchCompetition()">🚀 Launch Competition</button>
+      </div>
+
+      <div class="admin-card">
+        <h3>Create Mission</h3>
+        <div class="form-group">
+          <label class="form-label">Mission Title</label>
+          <input class="form-input" type="text" placeholder="e.g. Chat Blitz: 40 in a shift" id="new-miss-title">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input class="form-input" type="text" placeholder="Describe the challenge..." id="new-miss-desc">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Value</label>
+          <input class="form-input" type="number" placeholder="e.g. 40" id="new-miss-target">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Coin Reward</label>
+          <input class="form-input" type="number" placeholder="e.g. 100" id="new-miss-coins">
+        </div>
+        <button class="btn btn-primary" style="margin-bottom:12px;" onclick="createMission()">✅ Create Mission</button>
+      </div>
+
+      <div class="admin-card">
+        <h3>Award Coins Manually</h3>
+        <div class="form-group">
+          <label class="form-label">Agent</label>
+          <select class="form-select" id="award-agent">
+            <option>Alex</option><option>Maria</option><option>James</option>
+            <option>Sophie</option><option>Omar</option><option>Lena</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Coins</label>
+          <input class="form-input" type="number" placeholder="e.g. 100" id="award-coins">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason</label>
+          <input class="form-input" type="text" placeholder="e.g. Outstanding complaint resolution" id="award-reason">
+        </div>
+        <button class="btn btn-primary" onclick="awardCoins()">🪙 Award Coins</button>
+      </div>
+
+      <div class="admin-card">
+        <h3>Add Agent to Team</h3>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input class="form-input" type="text" placeholder="Full name" id="new-agent-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-select" id="new-agent-role">
+            <option>Support Agent</option>
+            <option>Senior Agent</option>
+            <option>Team Lead</option>
+            <option>VIP Support</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Starting Coins</label>
+          <input class="form-input" type="number" value="100" id="new-agent-coins">
+        </div>
+        <button class="btn btn-primary" onclick="addAgent()">➕ Add Agent</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CELEBRATION OVERLAY -->
+<div id="celebration">
+  <div class="celebration-content">
+    <div class="confetti-pieces" id="confetti-container"></div>
+    <div class="celebration-emoji" id="cel-emoji">🏆</div>
+    <div class="celebration-title" id="cel-title">ACHIEVEMENT UNLOCKED!</div>
+    <div class="celebration-sub" id="cel-sub">Alex completed a mission</div>
+    <div class="celebration-coins" id="cel-coins">+100 🪙</div>
+    <button class="btn btn-primary" style="width:auto;padding:12px 32px;" onclick="closeCelebration()">Claim Reward</button>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const agents = [
+  { name:'Maria', emoji:'👑', role:'Senior Agent', chats:62, rt:'1:22', csat:4.95, coins:520, score:980 },
+  { name:'James', emoji:'⚡', role:'Support Agent', chats:57, rt:'1:28', csat:4.85, coins:440, score:890 },
+  { name:'Alex',  emoji:'🎯', role:'Support Agent', chats:48, rt:'1:38', csat:4.90, coins:340, score:810 },
+  { name:'Sophie',emoji:'💎', role:'VIP Support',   chats:44, rt:'1:45', csat:4.92, coins:310, score:775 },
+  { name:'Omar',  emoji:'🔥', role:'Support Agent', chats:39, rt:'1:55', csat:4.75, coins:280, score:690 },
+  { name:'Lena',  emoji:'🚀', role:'Senior Agent',  chats:35, rt:'2:05', csat:4.70, coins:240, score:610 },
+];
+
+let competitions = [
+  { id:1, name:'Speed Demon', kpi:'Fastest Response Time', desc:'Who can handle chats the quickest? Every second counts in casino support.', leader:'Maria', leaderScore:'1:22 avg', prize:'€50 voucher', timeLeft:'2h 15m', active:true },
+  { id:2, name:'Chat Champion', kpi:'Most Chats Resolved', desc:'Volume is king. Resolve the most player queries before shift end.', leader:'James', leaderScore:'57 chats', prize:'500 🪙 + day off', timeLeft:'5h 42m', active:true },
+  { id:3, name:'CSAT King', kpi:'Highest CSAT Score', desc:'Quality over quantity. Keep players happy and earn their 5-star reviews.', leader:'Sophie', leaderScore:'4.92 rating', prize:'Amazon €30', timeLeft:'Ended', active:false },
+  { id:4, name:'Weekend Blitz', kpi:'High-Rated Chats', desc:'Special weekend sprint: most 4★+ rated chats wins the jackpot.', leader:'Maria', leaderScore:'41 high-rated', prize:'€100 bonus', timeLeft:'1d 8h', active:true },
+];
+
+let missions = [
+  { icon:'⚡', title:'Speed Run', desc:'Resolve 10 chats under 90s response time', progress:70, coins:80, done:false },
+  { icon:'⭐', title:'CSAT Star', desc:'Earn 5 consecutive 5-star ratings', progress:60, coins:120, done:false },
+  { icon:'💬', title:'Chat Blitz', desc:'Handle 50 chats in one shift', progress:96, coins:200, done:false },
+  { icon:'🛡️', title:'Escalation Shield', desc:'Zero escalations for 3 consecutive days', progress:33, coins:150, done:false },
+  { icon:'🌙', title:'Night Owl', desc:'Cover 5 late-shift hours with CSAT above 4.5', progress:80, coins:100, done:false },
+  { icon:'🎰', title:'VIP Handler', desc:'Successfully resolve 3 VIP player complaints', progress:66, coins:250, done:false },
+];
+
+let battles = [
+  { a:'Maria', ae:'👑', ascore:62, b:'James', be:'⚡', bscore:57, goal:'First to 70 chats', acoins:100, bcoins:100 },
+  { a:'Alex',  ae:'🎯', ascore:48, b:'Sophie',be:'💎', bscore:44, goal:'Most chats by 6PM', acoins:50, bcoins:50 },
+];
+
+let rewards = [
+  { icon:'☕', name:'Coffee & Snacks', desc:'A team coffee round on the house. You earned it.', cost:100 },
+  { icon:'🎟️', name:'Early Finish Friday', desc:'Leave 30 minutes early on any Friday this month.', cost:250 },
+  { icon:'🎮', name:'Gaming Session', desc:'1-hour gaming break in the team lounge during work hours.', cost:200 },
+  { icon:'🛍️', name:'€25 Amazon Voucher', desc:'Spend it on anything you like. No questions asked.', cost:400 },
+  { icon:'🍕', name:'Team Pizza Lunch', desc:'Pizza for the whole team, courtesy of the leaderboard winner.', cost:600 },
+  { icon:'🏖️', name:'Extra Day Off', desc:'An extra paid day off — use it whenever you want.', cost:1200 },
+];
+
+const alertMessages = [
+  { icon:'⚡', msg:'<strong>Maria</strong> resolved a chat in <strong>0:48s</strong> — new personal best!', time:'just now' },
+  { icon:'🏆', msg:'<strong>James</strong> hit <strong>57 chats</strong> today — leading Chat Champion!', time:'2m ago' },
+  { icon:'⭐', msg:'<strong>Sophie</strong> received a 5⭐ from VIP player', time:'4m ago' },
+  { icon:'🪙', msg:'<strong>Alex</strong> earned 80 coins for completing Speed Run mission', time:'7m ago' },
+  { icon:'⚔️', msg:'<strong>Alex</strong> challenged <strong>Omar</strong> to a battle — first to 55 chats!', time:'12m ago' },
+  { icon:'🎯', msg:'Team CSAT is at <strong>4.8</strong> — above target for 7 days straight!', time:'18m ago' },
+  { icon:'🔥', msg:'<strong>Lena</strong> is on a <strong>5-chat streak</strong> with zero escalations', time:'22m ago' },
+];
+
+// ===================== RENDER =====================
+function renderLeaderboard() {
+  const sorted = [...agents].sort((a,b)=>b.score-a.score);
+  const list = document.getElementById('leaderboard-list');
+  const maxScore = sorted[0].score;
+  list.innerHTML = sorted.map((a,i)=>{
+    const pct = (a.score/maxScore*100).toFixed(0);
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const barColor = i===0?'var(--gold)':i===1?'#C0C0C0':i===2?'#CD7F32':'var(--neon-blue)';
+    return `
+      <div class="leaderboard-item ${rankClass}">
+        <div class="rank-badge">#${i+1}</div>
+        <div class="avatar">${a.emoji}</div>
+        <div class="agent-info">
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-role">${a.role}</div>
+          <div class="progress-bar-wrap"><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${barColor}"></div></div></div>
+        </div>
+        <div class="agent-score">
+          <div class="score-val">${a.score}</div>
+          <div class="score-label">pts</div>
+          <div style="font-size:0.72rem;color:var(--gold);margin-top:2px;">🪙${a.coins}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderCompetitions() {
+  const grid = document.getElementById('competitions-grid');
+  grid.innerHTML = competitions.map(c=>`
+    <div class="comp-card">
+      <div class="comp-header">
+        <div class="comp-title">${c.name}</div>
+        <div class="comp-badge ${c.active?'':'ended'}">${c.active?'🟢 Active':'Ended'}</div>
+      </div>
+      <div class="comp-desc">${c.desc}</div>
+      <div class="comp-leader">
+        <div class="crown">👑</div>
+        <div class="comp-leader-info">
+          <div class="comp-leader-name">${c.leader}</div>
+          <div class="comp-leader-score">${c.leaderScore}</div>
+        </div>
+      </div>
+      <div class="comp-footer">
+        <div class="comp-time">⏱️ ${c.timeLeft}</div>
+        <div class="comp-prize">🏆 ${c.prize}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderMissions() {
+  const list = document.getElementById('missions-list');
+  list.innerHTML = missions.map((m,i)=>`
+    <div class="mission-item">
+      <div class="mission-icon">${m.icon}</div>
+      <div class="mission-info">
+        <div class="mission-title">${m.title}</div>
+        <div class="mission-desc">${m.desc}</div>
+      </div>
+      <div class="mission-progress-wrap">
+        <div class="mission-pct">${m.progress}%</div>
+        <div class="mission-bar-bg"><div class="mission-bar-fill" style="width:${m.progress}%"></div></div>
+        <div class="mission-coins">+${m.coins} 🪙</div>
+        ${m.progress>=100?`<button class="btn btn-primary" style="margin-top:6px;padding:5px;font-size:0.7rem;" onclick="completeMission(${i})">Claim!</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderBattles() {
+  const grid = document.getElementById('battles-grid');
+  grid.innerHTML = battles.map(b=>{
+    const total = b.ascore + b.bscore;
+    const aPct = ((b.ascore/total)*100).toFixed(0);
+    const bPct = (100-aPct);
+    return `
+      <div class="battle-card">
+        <div class="battle-header">⚔️ HEAD-TO-HEAD BATTLE</div>
+        <div class="battle-contestants">
+          <div class="contestant">
+            <div class="avatar" style="margin:0 auto 8px;">${b.ae}</div>
+            <div class="contestant-name">${b.a}</div>
+            <div class="contestant-score">${b.ascore}</div>
+          </div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--neon-red);font-weight:900;padding:0 8px;">VS</div>
+          <div class="contestant">
+            <div class="avatar" style="margin:0 auto 8px;">${b.be}</div>
+            <div class="contestant-name">${b.b}</div>
+            <div class="contestant-score">${b.bscore}</div>
+          </div>
+        </div>
+        <div class="battle-goal">${b.goal}</div>
+        <div class="battle-bar-wrap">
+          <div class="battle-bar-a" style="width:${aPct}%"></div>
+          <div class="battle-bar-b" style="width:${bPct}%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.75rem;color:var(--text-dim);">
+          <span>${aPct}%</span>
+          <span style="color:var(--gold);font-size:0.8rem;">🪙${b.acoins+b.bcoins} stake</span>
+          <span>${bPct}%</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderRewards() {
+  const grid = document.getElementById('rewards-grid');
+  grid.innerHTML = rewards.map(r=>`
+    <div class="reward-card" onclick="claimReward('${r.name}',${r.cost})">
+      <div class="reward-icon">${r.icon}</div>
+      <div class="reward-name">${r.name}</div>
+      <div class="reward-desc">${r.desc}</div>
+      <div class="reward-cost">🪙 ${r.cost} coins</div>
+    </div>`).join('');
+}
+
+function renderAlerts() {
+  const list = document.getElementById('alerts-feed-list');
+  list.innerHTML = alertMessages.map(a=>`
+    <div class="alert-item">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-msg">${a.msg}</div>
+      <div class="alert-time">${a.time}</div>
+    </div>`).join('');
+}
+
+// ===================== ACTIONS =====================
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(el=>{ if(el.textContent.toLowerCase().includes(v.substring(0,4))) el.classList.add('active'); });
+}
+
+let walletCoins = 340;
+
+function triggerCelebration(name, reason, coins) {
+  const emojis = ['🏆','🎰','🎉','💎','⭐','👑'];
+  document.getElementById('cel-emoji').textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  document.getElementById('cel-title').textContent = 'ACHIEVEMENT UNLOCKED!';
+  document.getElementById('cel-sub').textContent = `${name} earned recognition for: ${reason}`;
+  document.getElementById('cel-coins').textContent = `+${coins} 🪙`;
+  spawnConfetti();
+  document.getElementById('celebration').classList.add('show');
+  walletCoins += coins;
+  updateWallet();
+}
+
+function closeCelebration() {
+  document.getElementById('celebration').classList.remove('show');
+}
+
+function spawnConfetti() {
+  const c = document.getElementById('confetti-container');
+  c.innerHTML = '';
+  const colors = ['#FFD700','#00C8FF','#FF3366','#00FF88','#fff'];
+  for(let i=0;i<30;i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${0.8+Math.random()*1}s;
+      animation-delay:${Math.random()*0.3}s;
+      width:${4+Math.random()*8}px;
+      height:${4+Math.random()*8}px;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+    `;
+    c.appendChild(p);
+  }
+}
+
+function updateWallet() {
+  document.getElementById('wallet-coins').textContent = walletCoins;
+  document.getElementById('wallet-coins2').textContent = walletCoins;
+}
+
+function completeMission(i) {
+  missions[i].done = true;
+  triggerCelebration('Alex', missions[i].title + ' mission complete', missions[i].coins);
+  missions[i].progress = 100;
+  renderMissions();
+}
+
+function claimReward(name, cost) {
+  if(walletCoins >= cost) {
+    walletCoins -= cost;
+    updateWallet();
+    triggerCelebration('Alex', `redeemed "${name}"`, 0);
+    document.getElementById('cel-title').textContent = 'REWARD CLAIMED!';
+    document.getElementById('cel-coins').textContent = `-${cost} 🪙 spent`;
+  } else {
+    alert(`Not enough coins! You need ${cost} but only have ${walletCoins}. Keep competing!`);
+  }
+}
+
+function launchCompetition() {
+  const name = document.getElementById('new-comp-name').value;
+  const kpi = document.getElementById('new-comp-kpi').value;
+  const duration = document.getElementById('new-comp-duration').value;
+  const prize = document.getElementById('new-comp-prize').value;
+  if(!name) { alert('Enter a competition name'); return; }
+  competitions.unshift({ id:Date.now(), name, kpi, desc:`Track ${kpi} over ${duration}. May the best agent win!`, leader:'TBD', leaderScore:'—', prize: prize||'TBD', timeLeft:duration, active:true });
+  renderCompetitions();
+  showView('competitions');
+  document.getElementById('new-comp-name').value='';
+  document.getElementById('new-comp-prize').value='';
+  alert(`🚀 "${name}" launched! Good luck to all agents.`);
+}
+
+function createMission() {
+  const title = document.getElementById('new-miss-title').value;
+  const desc = document.getElementById('new-miss-desc').value;
+  const coins = parseInt(document.getElementById('new-miss-coins').value)||50;
+  if(!title) { alert('Enter a mission title'); return; }
+  missions.unshift({ icon:'🎯', title, desc, progress:0, coins, done:false });
+  renderMissions();
+  showView('missions');
+  document.getElementById('new-miss-title').value='';
+  document.getElementById('new-miss-desc').value='';
+}
+
+function awardCoins() {
+  const agent = document.getElementById('award-agent').value;
+  const coins = parseInt(document.getElementById('award-coins').value)||0;
+  const reason = document.getElementById('award-reason').value||'Outstanding performance';
+  if(!coins) { alert('Enter coin amount'); return; }
+  triggerCelebration(agent, reason, coins);
+  alertMessages.unshift({ icon:'🪙', msg:`<strong>${agent}</strong> was awarded <strong>${coins} coins</strong> — ${reason}`, time:'just now' });
+  renderAlerts();
+  document.getElementById('award-coins').value='';
+  document.getElementById('award-reason').value='';
+}
+
+function addAgent() {
+  const name = document.getElementById('new-agent-name').value;
+  const role = document.getElementById('new-agent-role').value;
+  const coins = parseInt(document.getElementById('new-agent-coins').value)||100;
+  if(!name) { alert('Enter agent name'); return; }
+  const emojis = ['😊','🤖','🦸','🌟','💪','🎯'];
+  agents.push({ name, emoji:emojis[Math.floor(Math.random()*emojis.length)], role, chats:0, rt:'—', csat:0, coins, score:0 });
+  renderLeaderboard();
+  alert(`✅ ${name} added to the team!`);
+  document.getElementById('new-agent-name').value='';
+}
+
+function startBattle() {
+  const opponents = agents.filter(a=>a.name!=='Alex');
+  const opp = opponents[Math.floor(Math.random()*opponents.length)];
+  if(walletCoins < 50) { alert('Need 50 coins to start a battle!'); return; }
+  walletCoins -= 50;
+  updateWallet();
+  battles.unshift({ a:'Alex', ae:'🎯', ascore:0, b:opp.name, be:opp.emoji, bscore:0, goal:'First to 10 chats', acoins:50, bcoins:50 });
+  renderBattles();
+  alert(`⚔️ Battle started vs ${opp.name}! First to 10 chats wins 100 coins.`);
+}
+
+// ===================== LIVE SIMULATION =====================
+function simulateActivity() {
+  // Randomly update stats
+  const agent = agents[Math.floor(Math.random()*agents.length)];
+  agent.chats += Math.floor(Math.random()*2);
+  agent.score += Math.floor(Math.random()*15)+5;
+  agent.coins += Math.floor(Math.random()*10);
+
+  // Update dashboard stats
+  const totalChats = agents.reduce((s,a)=>s+a.chats,0);
+  document.getElementById('stat-chats').textContent = totalChats.toLocaleString();
+
+  // Add random alert
+  const msgs = [
+    { icon:'⚡', msg:`<strong>${agent.name}</strong> just resolved a chat — score up!`, time:'just now' },
+    { icon:'🎯', msg:`<strong>${agent.name}</strong> is climbing the leaderboard`, time:'just now' },
+    { icon:'⭐', msg:`New 5⭐ rating for <strong>${agent.name}</strong>!`, time:'just now' },
+  ];
+  alertMessages.unshift(msgs[Math.floor(Math.random()*msgs.length)]);
+  if(alertMessages.length > 12) alertMessages.pop();
+
+  renderLeaderboard();
+  renderAlerts();
+}
+
+// ===================== INIT =====================
+renderLeaderboard();
+renderCompetitions();
+renderMissions();
+renderBattles();
+renderRewards();
+renderAlerts();
+
+// Simulate live data every 8 seconds
+setInterval(simulateActivity, 8000);
+</script>
+</body>
+</html>
