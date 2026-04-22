@@ -803,7 +803,7 @@
       </div>
       <div>
         <div class="scorecard-panel" style="margin-bottom:20px;">
-          <div class="section-title">📊 Your Scorecard — Alex</div>
+          <div class="section-title">📊 Your Scorecard — Wayne</div>
           <div class="kpi-row">
             <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">48</div><div class="kpi-lbl">Chats</div></div>
             <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-blue)">1:38</div><div class="kpi-lbl">Avg RT</div></div>
@@ -812,7 +812,7 @@
             <div class="kpi-box"><div class="kpi-val" style="color:var(--gold)">340</div><div class="kpi-lbl">Coins</div></div>
             <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">#3</div><div class="kpi-lbl">Rank</div></div>
           </div>
-          <button class="btn btn-primary" onclick="triggerCelebration('Alex', 'top CSAT score', 50)">🎉 Claim Daily Bonus (+50 coins)</button>
+          <button class="btn btn-primary" onclick="triggerCelebration('Wayne', 'top CSAT score', 50)">🎉 Claim Daily Bonus (+50 coins)</button>
         </div>
         <div class="alerts-feed">
           <div class="section-title">📡 Live Feed</div>
@@ -916,8 +916,8 @@
         <div class="form-group">
           <label class="form-label">Agent</label>
           <select class="form-select" id="award-agent">
-            <option>Alex</option><option>Maria</option><option>James</option>
-            <option>Sophie</option><option>Omar</option><option>Lena</option>
+            <option>Wayne</option><option>Mihail</option><option>Stefan</option>
+            <option>Stasi</option><option>Vesna</option><option>Dimitar</option>
           </select>
         </div>
         <div class="form-group">
@@ -963,7 +963,7 @@
     <div class="confetti-pieces" id="confetti-container"></div>
     <div class="celebration-emoji" id="cel-emoji">🏆</div>
     <div class="celebration-title" id="cel-title">ACHIEVEMENT UNLOCKED!</div>
-    <div class="celebration-sub" id="cel-sub">Alex completed a mission</div>
+    <div class="celebration-sub" id="cel-sub">Wayne completed a mission</div>
     <div class="celebration-coins" id="cel-coins">+100 🪙</div>
     <button class="btn btn-primary" style="width:auto;padding:12px 32px;" onclick="closeCelebration()">Claim Reward</button>
   </div>
@@ -972,19 +972,19 @@
 <script>
 // ===================== DATA =====================
 const agents = [
-  { name:'Maria', emoji:'👑', role:'Senior Agent', chats:62, rt:'1:22', csat:4.95, coins:520, score:980 },
-  { name:'James', emoji:'⚡', role:'Support Agent', chats:57, rt:'1:28', csat:4.85, coins:440, score:890 },
-  { name:'Alex',  emoji:'🎯', role:'Support Agent', chats:48, rt:'1:38', csat:4.90, coins:340, score:810 },
-  { name:'Sophie',emoji:'💎', role:'VIP Support',   chats:44, rt:'1:45', csat:4.92, coins:310, score:775 },
-  { name:'Omar',  emoji:'🔥', role:'Support Agent', chats:39, rt:'1:55', csat:4.75, coins:280, score:690 },
-  { name:'Lena',  emoji:'🚀', role:'Senior Agent',  chats:35, rt:'2:05', csat:4.70, coins:240, score:610 },
+  { name:'Mihail', emoji:'👑', role:'Senior Agent', chats:62, rt:'1:22', csat:4.95, coins:520, score:980 },
+  { name:'Stefan', emoji:'⚡', role:'Support Agent', chats:57, rt:'1:28', csat:4.85, coins:440, score:890 },
+  { name:'Wayne',  emoji:'🎯', role:'Support Agent', chats:48, rt:'1:38', csat:4.90, coins:340, score:810 },
+  { name:'Stasi',emoji:'💎', role:'VIP Support',   chats:44, rt:'1:45', csat:4.92, coins:310, score:775 },
+  { name:'Vesna',  emoji:'🔥', role:'Support Agent', chats:39, rt:'1:55', csat:4.75, coins:280, score:690 },
+  { name:'Dimitar',  emoji:'🚀', role:'Senior Agent',  chats:35, rt:'2:05', csat:4.70, coins:240, score:610 },
 ];
 
 let competitions = [
-  { id:1, name:'Speed Demon', kpi:'Fastest Response Time', desc:'Who can handle chats the quickest? Every second counts in casino support.', leader:'Maria', leaderScore:'1:22 avg', prize:'€50 voucher', timeLeft:'2h 15m', active:true },
-  { id:2, name:'Chat Champion', kpi:'Most Chats Resolved', desc:'Volume is king. Resolve the most player queries before shift end.', leader:'James', leaderScore:'57 chats', prize:'500 🪙 + day off', timeLeft:'5h 42m', active:true },
-  { id:3, name:'CSAT King', kpi:'Highest CSAT Score', desc:'Quality over quantity. Keep players happy and earn their 5-star reviews.', leader:'Sophie', leaderScore:'4.92 rating', prize:'Amazon €30', timeLeft:'Ended', active:false },
-  { id:4, name:'Weekend Blitz', kpi:'High-Rated Chats', desc:'Special weekend sprint: most 4★+ rated chats wins the jackpot.', leader:'Maria', leaderScore:'41 high-rated', prize:'€100 bonus', timeLeft:'1d 8h', active:true },
+  { id:1, name:'Speed Demon', kpi:'Fastest Response Time', desc:'Who can handle chats the quickest? Every second counts in casino support.', leader:'Mihail', leaderScore:'1:22 avg', prize:'€50 voucher', timeLeft:'2h 15m', active:true },
+  { id:2, name:'Chat Champion', kpi:'Most Chats Resolved', desc:'Volume is king. Resolve the most player queries before shift end.', leader:'Stefan', leaderScore:'57 chats', prize:'500 🪙 + day off', timeLeft:'5h 42m', active:true },
+  { id:3, name:'CSAT King', kpi:'Highest CSAT Score', desc:'Quality over quantity. Keep players happy and earn their 5-star reviews.', leader:'Stasi', leaderScore:'4.92 rating', prize:'Amazon €30', timeLeft:'Ended', active:false },
+  { id:4, name:'Weekend Blitz', kpi:'High-Rated Chats', desc:'Special weekend sprint: most 4★+ rated chats wins the jackpot.', leader:'Mihail', leaderScore:'41 high-rated', prize:'€100 bonus', timeLeft:'1d 8h', active:true },
 ];
 
 let missions = [
@@ -997,8 +997,8 @@ let missions = [
 ];
 
 let battles = [
-  { a:'Maria', ae:'👑', ascore:62, b:'James', be:'⚡', bscore:57, goal:'First to 70 chats', acoins:100, bcoins:100 },
-  { a:'Alex',  ae:'🎯', ascore:48, b:'Sophie',be:'💎', bscore:44, goal:'Most chats by 6PM', acoins:50, bcoins:50 },
+  { a:'Mihail', ae:'👑', ascore:62, b:'Stefan', be:'⚡', bscore:57, goal:'First to 70 chats', acoins:100, bcoins:100 },
+  { a:'Wayne',  ae:'🎯', ascore:48, b:'Stasi',be:'💎', bscore:44, goal:'Most chats by 6PM', acoins:50, bcoins:50 },
 ];
 
 let rewards = [
@@ -1011,13 +1011,13 @@ let rewards = [
 ];
 
 const alertMessages = [
-  { icon:'⚡', msg:'<strong>Maria</strong> resolved a chat in <strong>0:48s</strong> — new personal best!', time:'just now' },
-  { icon:'🏆', msg:'<strong>James</strong> hit <strong>57 chats</strong> today — leading Chat Champion!', time:'2m ago' },
-  { icon:'⭐', msg:'<strong>Sophie</strong> received a 5⭐ from VIP player', time:'4m ago' },
-  { icon:'🪙', msg:'<strong>Alex</strong> earned 80 coins for completing Speed Run mission', time:'7m ago' },
-  { icon:'⚔️', msg:'<strong>Alex</strong> challenged <strong>Omar</strong> to a battle — first to 55 chats!', time:'12m ago' },
+  { icon:'⚡', msg:'<strong>Mihail</strong> resolved a chat in <strong>0:48s</strong> — new personal best!', time:'just now' },
+  { icon:'🏆', msg:'<strong>Stefan</strong> hit <strong>57 chats</strong> today — leading Chat Champion!', time:'2m ago' },
+  { icon:'⭐', msg:'<strong>Stasi</strong> received a 5⭐ from VIP player', time:'4m ago' },
+  { icon:'🪙', msg:'<strong>Wayne</strong> earned 80 coins for completing Speed Run mission', time:'7m ago' },
+  { icon:'⚔️', msg:'<strong>Wayne</strong> challenged <strong>Vesna</strong> to a battle — first to 55 chats!', time:'12m ago' },
   { icon:'🎯', msg:'Team CSAT is at <strong>4.8</strong> — above target for 7 days straight!', time:'18m ago' },
-  { icon:'🔥', msg:'<strong>Lena</strong> is on a <strong>5-chat streak</strong> with zero escalations', time:'22m ago' },
+  { icon:'🔥', msg:'<strong>Dimitar</strong> is on a <strong>5-chat streak</strong> with zero escalations', time:'22m ago' },
 ];
 
 // ===================== RENDER =====================
@@ -1198,7 +1198,7 @@ function updateWallet() {
 
 function completeMission(i) {
   missions[i].done = true;
-  triggerCelebration('Alex', missions[i].title + ' mission complete', missions[i].coins);
+  triggerCelebration('Wayne', missions[i].title + ' mission complete', missions[i].coins);
   missions[i].progress = 100;
   renderMissions();
 }
@@ -1207,7 +1207,7 @@ function claimReward(name, cost) {
   if(walletCoins >= cost) {
     walletCoins -= cost;
     updateWallet();
-    triggerCelebration('Alex', `redeemed "${name}"`, 0);
+    triggerCelebration('Wayne', `redeemed "${name}"`, 0);
     document.getElementById('cel-title').textContent = 'REWARD CLAIMED!';
     document.getElementById('cel-coins').textContent = `-${cost} 🪙 spent`;
   } else {
@@ -1266,12 +1266,12 @@ function addAgent() {
 }
 
 function startBattle() {
-  const opponents = agents.filter(a=>a.name!=='Alex');
+  const opponents = agents.filter(a=>a.name!=='Wayne');
   const opp = opponents[Math.floor(Math.random()*opponents.length)];
   if(walletCoins < 50) { alert('Need 50 coins to start a battle!'); return; }
   walletCoins -= 50;
   updateWallet();
-  battles.unshift({ a:'Alex', ae:'🎯', ascore:0, b:opp.name, be:opp.emoji, bscore:0, goal:'First to 10 chats', acoins:50, bcoins:50 });
+  battles.unshift({ a:'Wayne', ae:'🎯', ascore:0, b:opp.name, be:opp.emoji, bscore:0, goal:'First to 10 chats', acoins:50, bcoins:50 });
   renderBattles();
   alert(`⚔️ Battle started vs ${opp.name}! First to 10 chats wins 100 coins.`);
 }
