@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦏 Rhino Arena — Intercom Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --purple: #9B59FF; --purple-bright: #C084FC; --purple-deep: #6D28D9;
+    --magenta: #E040FB; --neon-green: #00FF88; --neon-cyan: #22D3EE;
+    --neon-red: #FF3366; --bg-deep: #07040F; --bg-card: #110D1F;
+    --border: rgba(155,89,255,0.25); --border-bright: rgba(155,89,255,0.5);
+    --text: #EDE8F8; --text-dim: #7A6E9A;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg-deep); color:var(--text); font-family:'Rajdhani',sans-serif; min-height:100vh; padding:30px 20px; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(155,89,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(155,89,255,0.04) 1px,transparent 1px); background-size:44px 44px; pointer-events:none; z-index:0; }
+
+  .container { max-width:900px; margin:0 auto; position:relative; z-index:1; }
+
+  /* Header */
+  .header { text-align:center; margin-bottom:36px; }
+  .header-logo { font-size:3.5rem; margin-bottom:10px; filter:drop-shadow(0 0 20px rgba(155,89,255,0.6)); }
+  .header-title { font-family:'Orbitron',monospace; font-size:1.6rem; font-weight:900; background:linear-gradient(90deg,var(--purple-bright),var(--magenta)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:3px; }
+  .header-sub { color:var(--text-dim); font-size:0.85rem; letter-spacing:2px; text-transform:uppercase; margin-top:6px; font-family:'Orbitron',monospace; }
+
+  /* Cards */
+  .card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px; }
+  .card-title { font-family:'Orbitron',monospace; font-size:0.78rem; font-weight:700; letter-spacing:3px; color:var(--purple-bright); text-transform:uppercase; margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+
+  /* Status */
+  .status-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .conn-dot { width:10px; height:10px; border-radius:50%; background:#444; flex-shrink:0; transition:all 0.3s; }
+  .conn-dot.ok { background:var(--neon-green); box-shadow:0 0 8px var(--neon-green); }
+  .conn-dot.err { background:var(--neon-red); box-shadow:0 0 8px var(--neon-red); }
+  .conn-text { font-size:0.88rem; color:var(--text-dim); }
+
+  /* Controls grid */
+  .controls-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+
+  .control-box { background:rgba(155,89,255,0.05); border:1px solid var(--border); border-radius:12px; padding:18px; }
+  .control-label { font-size:0.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; font-family:'Orbitron',monospace; }
+
+  input[type=range] { width:100%; accent-color:var(--purple-bright); cursor:pointer; }
+  .range-val { font-family:'Orbitron',monospace; font-size:1.1rem; color:var(--purple-bright); font-weight:700; margin-top:4px; }
+
+  select.sim-select { width:100%; background:rgba(155,89,255,0.08); border:1px solid rgba(155,89,255,0.25); border-radius:8px; padding:8px 12px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:0.92rem; outline:none; cursor:pointer; }
+  select.sim-select option { background:#130e22; }
+
+  /* Big buttons */
+  .btn-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .btn { padding:12px 24px; border:none; border-radius:12px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.95rem; letter-spacing:0.8px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; flex:1; min-width:160px; }
+  .btn-start { background:linear-gradient(135deg,var(--neon-green),#00CC66); color:#000; box-shadow:0 4px 20px rgba(0,255,136,0.25); }
+  .btn-start:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,255,136,0.4); }
+  .btn-start:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .btn-stop { background:linear-gradient(135deg,var(--neon-red),#CC0044); color:#fff; box-shadow:0 4px 20px rgba(255,51,102,0.25); }
+  .btn-stop:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(255,51,102,0.4); }
+  .btn-stop:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .btn-burst { background:linear-gradient(135deg,var(--purple),var(--purple-deep)); color:#fff; box-shadow:0 4px 20px rgba(155,89,255,0.25); }
+  .btn-burst:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(155,89,255,0.4); }
+  .btn-reset { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-dim); }
+  .btn-reset:hover { background:rgba(255,51,102,0.1); border-color:var(--neon-red); color:var(--neon-red); }
+
+  /* Stats strip */
+  .stats-strip { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+  .stat-pill { background:rgba(155,89,255,0.07); border:1px solid var(--border); border-radius:10px; padding:12px; text-align:center; }
+  .stat-pill-val { font-family:'Orbitron',monospace; font-size:1.2rem; font-weight:700; color:var(--purple-bright); }
+  .stat-pill-lbl { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.8px; margin-top:3px; }
+
+  /* Event log */
+  .log-wrap { background:rgba(0,0,0,0.3); border:1px solid rgba(155,89,255,0.15); border-radius:12px; padding:14px; height:320px; overflow-y:auto; font-family:monospace; font-size:0.82rem; }
+  .log-wrap::-webkit-scrollbar { width:4px; }
+  .log-wrap::-webkit-scrollbar-thumb { background:rgba(155,89,255,0.4); border-radius:2px; }
+
+  .log-entry { padding:3px 0; border-bottom:1px solid rgba(155,89,255,0.05); display:flex; gap:10px; align-items:baseline; }
+  .log-entry:last-child { border-bottom:none; }
+  .log-time { color:var(--text-dim); font-size:0.72rem; flex-shrink:0; }
+  .log-icon { flex-shrink:0; }
+  .log-msg { flex:1; line-height:1.4; }
+  .log-msg .agent { color:var(--purple-bright); font-weight:bold; }
+  .log-msg .good { color:var(--neon-green); }
+  .log-msg .bad  { color:var(--neon-red); }
+  .log-msg .info { color:var(--neon-cyan); }
+
+  /* Agent checkboxes */
+  .agent-toggles { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+  .agent-toggle { display:flex; align-items:center; gap:6px; background:rgba(155,89,255,0.07); border:1px solid var(--border); border-radius:20px; padding:5px 12px; cursor:pointer; transition:all 0.2s; user-select:none; font-size:0.85rem; font-weight:600; }
+  .agent-toggle:hover { background:rgba(155,89,255,0.15); }
+  .agent-toggle.active { background:rgba(155,89,255,0.2); border-color:var(--purple-bright); color:var(--purple-bright); }
+  .agent-toggle input { display:none; }
+
+  /* Progress bar */
+  .sim-progress { height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; margin-top:8px; }
+  .sim-progress-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--magenta)); border-radius:2px; transition:width 0.5s; width:0%; }
+
+  /* Running indicator */
+  .running-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.3); padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; color:var(--neon-green); text-transform:uppercase; letter-spacing:1px; }
+  .running-dot { width:6px; height:6px; background:var(--neon-green); border-radius:50%; animation:pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(1.5)} }
+
+  @media(max-width:600px) { .controls-grid{grid-template-columns:1fr} .stats-strip{grid-template-columns:repeat(3,1fr)} }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-logo">🦏</div>
+    <div class="header-title">Intercom Simulator</div>
+    <div class="header-sub">Rhino Arena · Live Data Generator</div>
+  </div>
+
+  <!-- Connection status -->
+  <div class="card">
+    <div class="status-row">
+      <div class="conn-dot" id="conn-dot"></div>
+      <div class="conn-text" id="conn-text">Connecting to Supabase…</div>
+      <div id="running-indicator" style="margin-left:auto;display:none;">
+        <div class="running-badge"><div class="running-dot"></div> Simulator Running</div>
+      </div>
+    </div>
+    <div class="sim-progress"><div class="sim-progress-fill" id="sim-progress"></div></div>
+  </div>
+
+  <!-- Stats strip -->
+  <div class="stats-strip">
+    <div class="stat-pill"><div class="stat-pill-val" id="s-events">0</div><div class="stat-pill-lbl">Events Sent</div></div>
+    <div class="stat-pill"><div class="stat-pill-val" id="s-chats">0</div><div class="stat-pill-lbl">Chats Closed</div></div>
+    <div class="stat-pill"><div class="stat-pill-val" id="s-csat">0</div><div class="stat-pill-lbl">CSAT Ratings</div></div>
+    <div class="stat-pill"><div class="stat-pill-val" id="s-coins">0</div><div class="stat-pill-lbl">Coins Awarded</div></div>
+    <div class="stat-pill"><div class="stat-pill-val" id="s-runtime">0s</div><div class="stat-pill-lbl">Runtime</div></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="card">
+    <div class="card-title">⚙️ Simulation Settings</div>
+
+    <div class="controls-grid">
+      <div class="control-box">
+        <label class="control-label">Event Interval</label>
+        <input type="range" id="interval-range" min="1" max="30" value="5" oninput="updateIntervalLabel(this.value)">
+        <div class="range-val">Every <span id="interval-val">5</span>s</div>
+      </div>
+      <div class="control-box">
+        <label class="control-label">Simulation Mode</label>
+        <select class="sim-select" id="sim-mode">
+          <option value="realistic">Realistic (mixed performance)</option>
+          <option value="highperf">High Performance Day</option>
+          <option value="struggle">Struggling Day</option>
+          <option value="random">Pure Random</option>
+          <option value="competitive">Competition Mode (close scores)</option>
+        </select>
+      </div>
+      <div class="control-box">
+        <label class="control-label">CSAT Frequency</label>
+        <input type="range" id="csat-range" min="10" max="100" value="40" oninput="updateCSATLabel(this.value)">
+        <div class="range-val"><span id="csat-val">40</span>% of chats get rated</div>
+      </div>
+      <div class="control-box">
+        <label class="control-label">Events per Burst</label>
+        <input type="range" id="burst-range" min="1" max="20" value="5" oninput="updateBurstLabel(this.value)">
+        <div class="range-val"><span id="burst-val">5</span> events at once</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label class="control-label" style="display:block;margin-bottom:8px;">Active Agents (toggle to include/exclude)</label>
+      <div class="agent-toggles" id="agent-toggles">
+        <div style="color:var(--text-dim);font-size:0.82rem;">Loading agents…</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-start" id="btn-start" onclick="startSim()">▶ Start Simulation</button>
+      <button class="btn btn-stop" id="btn-stop" onclick="stopSim()" disabled>⏹ Stop</button>
+      <button class="btn btn-burst" onclick="fireBurst()">⚡ Fire Burst Now</button>
+      <button class="btn btn-reset" onclick="resetStats()">🔄 Reset Agent Stats</button>
+    </div>
+  </div>
+
+  <!-- Event Log -->
+  <div class="card">
+    <div class="card-title">📡 Live Event Log <span style="margin-left:auto;font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:var(--text-dim);letter-spacing:0;">Events appear here as they fire</span></div>
+    <div class="log-wrap" id="log-wrap">
+      <div class="log-entry"><div class="log-time">--:--:--</div><div class="log-icon">🦏</div><div class="log-msg"><span class="info">Simulator ready. Press Start or Fire Burst to begin.</span></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════════════════
+const SUPA_URL = 'https://bfobchqoheogfwqmkbcr.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmb2JjaHFvaGVvZ2Z3cW1rYmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MDAwMzAsImV4cCI6MjA5MjQ3NjAzMH0.Uup8-uynz_HNkCai3ZmlYTYw_DG_99CyRLzzdajAI4w';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let agents = [];
+let activeAgentIds = new Set();
+let simInterval = null;
+let simRunning = false;
+let startTime = null;
+let runtimeInterval = null;
+
+let totalEvents = 0;
+let totalChats  = 0;
+let totalCSAT   = 0;
+let totalCoins  = 0;
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('load', async () => {
+  try {
+    const { data, error } = await sb.from('agents').select('*').order('score', { ascending: false });
+    if (error) throw error;
+    agents = data || [];
+    activeAgentIds = new Set(agents.map(a => a.id));
+    renderAgentToggles();
+    setConn(true, `Connected — ${agents.length} agents loaded`);
+  } catch(e) {
+    setConn(false, 'Cannot connect to Supabase: ' + e.message);
+  }
+});
+
+function setConn(ok, msg) {
+  document.getElementById('conn-dot').className = 'conn-dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('conn-text').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════
+// AGENT TOGGLES
+// ═══════════════════════════════════════════════
+function renderAgentToggles() {
+  const wrap = document.getElementById('agent-toggles');
+  wrap.innerHTML = agents.map(a => `
+    <label class="agent-toggle active" id="toggle-${a.id}" onclick="toggleAgent('${a.id}',this)">
+      <input type="checkbox" checked>
+      ${a.emoji} ${a.name}
+    </label>`).join('');
+}
+
+function toggleAgent(id, el) {
+  if (activeAgentIds.has(id)) {
+    activeAgentIds.delete(id);
+    el.classList.remove('active');
+  } else {
+    activeAgentIds.add(id);
+    el.classList.add('active');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// LABEL UPDATES
+// ═══════════════════════════════════════════════
+function updateIntervalLabel(v) { document.getElementById('interval-val').textContent = v; }
+function updateCSATLabel(v)     { document.getElementById('csat-val').textContent = v; }
+function updateBurstLabel(v)    { document.getElementById('burst-val').textContent = v; }
+
+// ═══════════════════════════════════════════════
+// SIMULATION CONTROLS
+// ═══════════════════════════════════════════════
+function startSim() {
+  if (simRunning) return;
+  simRunning = true;
+  startTime = Date.now();
+  const interval = parseInt(document.getElementById('interval-range').value) * 1000;
+  simInterval = setInterval(fireOneEvent, interval);
+  runtimeInterval = setInterval(updateRuntime, 1000);
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  document.getElementById('running-indicator').style.display = 'block';
+  log('🟢', '<span class="good">Simulation started</span> — events firing every ' + document.getElementById('interval-val').textContent + 's');
+}
+
+function stopSim() {
+  if (!simRunning) return;
+  simRunning = false;
+  clearInterval(simInterval);
+  clearInterval(runtimeInterval);
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('running-indicator').style.display = 'none';
+  log('🔴', '<span class="bad">Simulation stopped</span>');
+}
+
+async function fireBurst() {
+  const count = parseInt(document.getElementById('burst-range').value);
+  log('⚡', `<span class="info">Firing burst of ${count} events…</span>`);
+  for (let i = 0; i < count; i++) {
+    await fireOneEvent();
+    await sleep(200);
+  }
+}
+
+async function resetStats() {
+  if (!confirm('Reset ALL agent stats to zero? This cannot be undone.')) return;
+  try {
+    for (const a of agents) {
+      await sb.from('agents').update({
+        chats: 0, rt: '—', rt_seconds: 0, first_reply_seconds: 0,
+        csat: 0, csat_count: 0, csat_total: 0, escalations: 0, score: 0
+      }).eq('id', a.id);
+    }
+    // Reload agents
+    const { data } = await sb.from('agents').select('*');
+    agents = data || [];
+    log('🔄', '<span class="bad">All agent stats reset to zero</span>');
+  } catch(e) {
+    log('❌', 'Reset failed: ' + e.message);
+  }
+}
+
+function updateRuntime() {
+  const secs = Math.floor((Date.now() - startTime) / 1000);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  document.getElementById('s-runtime').textContent = m > 0 ? `${m}m${s}s` : `${s}s`;
+  // Animate progress bar (loops every 60s)
+  const pct = (secs % 60) / 60 * 100;
+  document.getElementById('sim-progress').style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════
+// CORE EVENT FIRE
+// ═══════════════════════════════════════════════
+async function fireOneEvent() {
+  const active = agents.filter(a => activeAgentIds.has(a.id));
+  if (!active.length) { log('⚠️', '<span class="bad">No active agents selected</span>'); return; }
+
+  const agent = pickAgent(active);
+  const mode  = document.getElementById('sim-mode').value;
+  const csatFreq = parseInt(document.getElementById('csat-range').value);
+
+  // Generate conversation data based on mode
+  const conv = generateConversation(agent, mode);
+
+  try {
+    // 1. Update chat count + response time
+    const newChats = (agent.chats || 0) + 1;
+    const oldRT    = agent.rt_seconds || 0;
+    const newRT    = oldRT === 0 ? conv.rt : Math.round((oldRT * agent.chats + conv.rt) / newChats);
+    const oldFR    = agent.first_reply_seconds || 0;
+    const newFR    = oldFR === 0 ? conv.firstReply : Math.round((oldFR * agent.chats + conv.firstReply) / newChats);
+
+    // 2. Maybe add CSAT
+    let newCSATTotal = parseFloat(agent.csat_total) || 0;
+    let newCSATCount = parseInt(agent.csat_count) || 0;
+    let csatRating   = null;
+    const gotRated   = Math.random() * 100 < csatFreq;
+
+    if (gotRated) {
+      csatRating = generateCSAT(agent, mode);
+      newCSATTotal += csatRating;
+      newCSATCount += 1;
+      totalCSAT++;
+    }
+
+    const newCSAT = newCSATCount > 0 ? parseFloat((newCSATTotal / newCSATCount).toFixed(2)) : 0;
+
+    // 3. Calculate new score
+    const newScore = (newChats * 10) + Math.round(newCSAT * 50) + Math.max(0, 200 - newRT);
+
+    // 4. Coin reward for chat
+    const coinsEarned = calcCoins(conv, csatRating, mode);
+    const newCoins    = (agent.coins || 0) + coinsEarned;
+
+    // 5. Escalation (rare)
+    const escalated = Math.random() < (mode === 'struggle' ? 0.12 : 0.03);
+    const newEscalations = (agent.escalations || 0) + (escalated ? 1 : 0);
+
+    // 6. Format RT string
+    const rtStr = `${Math.floor(newRT/60)}:${String(newRT%60).padStart(2,'0')}`;
+
+    // 7. Update Supabase
+    await sb.from('agents').update({
+      chats:                newChats,
+      rt_seconds:           newRT,
+      rt:                   rtStr,
+      first_reply_seconds:  newFR,
+      csat:                 newCSAT,
+      csat_total:           newCSATTotal,
+      csat_count:           newCSATCount,
+      coins:                newCoins,
+      score:                newScore,
+      escalations:          newEscalations,
+    }).eq('id', agent.id);
+
+    // 8. Feed entry
+    const feedMsg = buildFeedMessage(agent, conv, csatRating, coinsEarned, escalated);
+    await sb.from('feed_entries').insert(feedMsg);
+
+    // Trim feed to 20
+    const { data: feedRows } = await sb.from('feed_entries').select('id').order('created_at', { ascending: false }).range(20, 999);
+    if (feedRows?.length) await sb.from('feed_entries').delete().in('id', feedRows.map(r => r.id));
+
+    // 9. Update competition leaders
+    await updateCompetitionLeaders();
+
+    // 10. Update dashboard stats
+    await updateDashboardStats();
+
+    // 11. Refresh local agent cache
+    agent.chats              = newChats;
+    agent.rt_seconds         = newRT;
+    agent.rt                 = rtStr;
+    agent.first_reply_seconds= newFR;
+    agent.csat               = newCSAT;
+    agent.csat_total         = newCSATTotal;
+    agent.csat_count         = newCSATCount;
+    agent.coins              = newCoins;
+    agent.score              = newScore;
+    agent.escalations        = newEscalations;
+
+    // Update counters
+    totalEvents++;
+    totalChats++;
+    totalCoins += coinsEarned;
+    updateCounters();
+
+    // Log
+    logEvent(agent, conv, csatRating, coinsEarned, escalated, rtStr);
+
+  } catch(e) {
+    log('❌', `Error updating ${agent.name}: ${e.message}`);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// GENERATORS
+// ═══════════════════════════════════════════════
+function pickAgent(active) {
+  // Weighted: agents with fewer chats get picked more often to balance
+  const mode = document.getElementById('sim-mode').value;
+  if (mode === 'competitive') {
+    // Everyone gets equal chance
+    return active[Math.floor(Math.random() * active.length)];
+  }
+  // Weight by inverse chats count (busier agents slightly less likely)
+  const weights = active.map(a => Math.max(1, 100 - (a.chats || 0)));
+  const total   = weights.reduce((s,w) => s+w, 0);
+  let rand = Math.random() * total;
+  for (let i = 0; i < active.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) return active[i];
+  }
+  return active[active.length - 1];
+}
+
+function generateConversation(agent, mode) {
+  // Response time ranges by mode (seconds)
+  const rtRanges = {
+    realistic:   { min: 45,  max: 240 },
+    highperf:    { min: 30,  max: 120 },
+    struggle:    { min: 120, max: 480 },
+    random:      { min: 20,  max: 600 },
+    competitive: { min: 60,  max: 200 },
+  };
+  const r = rtRanges[mode];
+  const rt = Math.floor(r.min + Math.random() * (r.max - r.min));
+
+  // First reply is usually faster than avg
+  const firstReply = Math.floor(rt * (0.4 + Math.random() * 0.4));
+
+  // Chat topics for realism
+  const topics = [
+    'account access issue', 'deposit not credited', 'bonus query',
+    'withdrawal pending', 'game not loading', 'verification request',
+    'promo question', 'VIP upgrade inquiry', 'payment method issue',
+    'responsible gaming query', 'technical support', 'live chat complaint',
+  ];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+
+  return { rt, firstReply, topic };
+}
+
+function generateCSAT(agent, mode) {
+  // Base distribution by mode
+  const distributions = {
+    realistic:   [1,2,3,4,4,4,5,5,5,5],
+    highperf:    [3,4,4,5,5,5,5,5,5,5],
+    struggle:    [1,1,2,2,3,3,4,4,5,5],
+    random:      [1,2,3,4,5,1,2,3,4,5],
+    competitive: [3,4,4,4,5,5,5,5,5,5],
+  };
+  const dist = distributions[mode];
+  return dist[Math.floor(Math.random() * dist.length)];
+}
+
+function calcCoins(conv, csatRating, mode) {
+  let coins = 5; // base per chat
+  // Speed bonus
+  if (conv.rt < 60)  coins += 15;
+  else if (conv.rt < 120) coins += 8;
+  else if (conv.rt < 180) coins += 3;
+  // CSAT bonus
+  if (csatRating === 5) coins += 20;
+  else if (csatRating === 4) coins += 8;
+  else if (csatRating !== null && csatRating <= 2) coins -= 5;
+  // Mode modifier
+  if (mode === 'highperf') coins = Math.round(coins * 1.3);
+  return Math.max(1, coins);
+}
+
+function buildFeedMessage(agent, conv, csatRating, coins, escalated) {
+  const rtStr = `${Math.floor(conv.rt/60)}:${String(conv.rt%60).padStart(2,'0')}`;
+  const timeLabel = justNowLabel();
+
+  if (escalated) {
+    return { icon:'⚠️', message:`<strong>${agent.name}</strong> had an escalation on a <strong>${conv.topic}</strong>`, time_label: timeLabel };
+  }
+  if (csatRating === 5) {
+    return { icon:'⭐', message:`<strong>${agent.name}</strong> received a <strong>5⭐ rating</strong> on ${conv.topic} — +${coins} 🦏`, time_label: timeLabel };
+  }
+  if (csatRating !== null && csatRating <= 2) {
+    return { icon:'😟', message:`<strong>${agent.name}</strong> received a <strong>${csatRating}⭐</strong> on ${conv.topic}`, time_label: timeLabel };
+  }
+  if (conv.rt < 60) {
+    return { icon:'⚡', message:`<strong>${agent.name}</strong> resolved <strong>${conv.topic}</strong> in <strong>${rtStr}</strong> — lightning fast! +${coins} 🦏`, time_label: timeLabel };
+  }
+  return { icon:'💬', message:`<strong>${agent.name}</strong> resolved <strong>${conv.topic}</strong> in ${rtStr} · +${coins} 🦏`, time_label: timeLabel };
+}
+
+function justNowLabel() {
+  const labels = ['just now', 'just now', 'just now', '1m ago', '2m ago'];
+  return labels[Math.floor(Math.random() * labels.length)];
+}
+
+// ═══════════════════════════════════════════════
+// COMPETITION + STATS AUTO-UPDATE
+// ═══════════════════════════════════════════════
+async function updateCompetitionLeaders() {
+  try {
+    const { data: comps } = await sb.from('competitions').select('*').eq('active', true);
+    if (!comps?.length) return;
+
+    const { data: ag } = await sb.from('agents').select('*').order('score', { ascending: false });
+    if (!ag?.length) return;
+
+    for (const comp of comps) {
+      let leader, leaderScore;
+      const kpi = comp.kpi?.toLowerCase() || '';
+
+      if (kpi.includes('chat') || kpi.includes('volume')) {
+        const top = [...ag].sort((a,b) => b.chats - a.chats)[0];
+        leader = top.name; leaderScore = `${top.chats} chats`;
+      } else if (kpi.includes('response') || kpi.includes('speed') || kpi.includes('time')) {
+        const top = [...ag].filter(a => a.rt_seconds > 0).sort((a,b) => a.rt_seconds - b.rt_seconds)[0];
+        if (top) { leader = top.name; leaderScore = `${top.rt} avg`; }
+      } else if (kpi.includes('csat') || kpi.includes('rating') || kpi.includes('quality')) {
+        const top = [...ag].filter(a => a.csat > 0).sort((a,b) => b.csat - a.csat)[0];
+        if (top) { leader = top.name; leaderScore = `${parseFloat(top.csat).toFixed(2)} rating`; }
+      } else {
+        const top = ag[0];
+        leader = top.name; leaderScore = `${top.score} pts`;
+      }
+
+      if (leader) {
+        await sb.from('competitions').update({ leader, leader_score: leaderScore }).eq('id', comp.id);
+      }
+    }
+  } catch(e) { /* silent */ }
+}
+
+async function updateDashboardStats() {
+  try {
+    const { data: ag } = await sb.from('agents').select('chats, rt_seconds, csat');
+    if (!ag) return;
+    const totalChats = ag.reduce((s,a) => s + (a.chats||0), 0);
+    const avgRT_s    = ag.filter(a => a.rt_seconds > 0);
+    const avgRT      = avgRT_s.length ? Math.round(avgRT_s.reduce((s,a) => s + a.rt_seconds, 0) / avgRT_s.length) : 0;
+    const avgRTStr   = avgRT > 0 ? `${Math.floor(avgRT/60)}m ${avgRT%60}s` : '—';
+    const csatAgents = ag.filter(a => parseFloat(a.csat) > 0);
+    const avgCSAT    = csatAgents.length ? (csatAgents.reduce((s,a) => s + parseFloat(a.csat), 0) / csatAgents.length).toFixed(1) : '—';
+
+    await sb.from('dashboard_stats').update({
+      chats_resolved:    totalChats.toLocaleString(),
+      avg_response_time: avgRTStr,
+      csat_score:        avgCSAT,
+      updated_at:        new Date().toISOString(),
+    }).eq('id', 1);
+  } catch(e) { /* silent */ }
+}
+
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
+function updateCounters() {
+  document.getElementById('s-events').textContent = totalEvents;
+  document.getElementById('s-chats').textContent  = totalChats;
+  document.getElementById('s-csat').textContent   = totalCSAT;
+  document.getElementById('s-coins').textContent  = totalCoins;
+}
+
+function logEvent(agent, conv, csatRating, coins, escalated, rtStr) {
+  let icon, msg;
+  if (escalated) {
+    icon = '⚠️';
+    msg = `<span class="agent">${agent.emoji} ${agent.name}</span> — escalation on <em>${conv.topic}</em> <span class="bad">[ESCALATED]</span>`;
+  } else if (csatRating === 5) {
+    icon = '⭐';
+    msg = `<span class="agent">${agent.emoji} ${agent.name}</span> — ${conv.topic} · RT: ${rtStr} · <span class="good">5⭐ CSAT · +${coins} 🦏</span>`;
+  } else if (csatRating !== null && csatRating <= 2) {
+    icon = '😟';
+    msg = `<span class="agent">${agent.emoji} ${agent.name}</span> — ${conv.topic} · RT: ${rtStr} · <span class="bad">${csatRating}⭐ CSAT</span>`;
+  } else if (csatRating !== null) {
+    icon = '💬';
+    msg = `<span class="agent">${agent.emoji} ${agent.name}</span> — ${conv.topic} · RT: ${rtStr} · <span class="info">${csatRating}⭐ · +${coins} 🦏</span>`;
+  } else {
+    icon = '💬';
+    msg = `<span class="agent">${agent.emoji} ${agent.name}</span> — ${conv.topic} · RT: ${rtStr} · <span class="good">+${coins} 🦏</span>`;
+  }
+  log(icon, msg);
+}
+
+function log(icon, msg) {
+  const wrap = document.getElementById('log-wrap');
+  const now  = new Date();
+  const time = now.toTimeString().slice(0,8);
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<div class="log-time">${time}</div><div class="log-icon">${icon}</div><div class="log-msg">${msg}</div>`;
+  wrap.insertBefore(entry, wrap.firstChild);
+  // Keep log to 200 entries
+  while (wrap.children.length > 200) wrap.removeChild(wrap.lastChild);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
