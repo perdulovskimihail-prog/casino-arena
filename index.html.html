@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rhino Entertainment Arena</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --purple: #9B59FF;
@@ -23,891 +24,288 @@
     --text: #EDE8F8;
     --text-dim: #7A6E9A;
   }
-
   * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg-deep); color:var(--text); font-family:'Rajdhani',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(155,89,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(155,89,255,0.04) 1px,transparent 1px); background-size:44px 44px; pointer-events:none; z-index:0; }
+  body::after { content:''; position:fixed; top:-40%; right:-10%; width:60%; height:100%; background:radial-gradient(ellipse,rgba(155,89,255,0.07) 0%,transparent 65%); pointer-events:none; z-index:0; }
+  .app { position:relative; z-index:1; max-width:1800px; margin:0 auto; padding:20px; }
 
-  body {
-    background: var(--bg-deep);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position:fixed; inset:0; z-index:999;
+    background:var(--bg-deep);
+    display:flex; align-items:center; justify-content:center;
   }
-
-  body::before {
-    content:'';
-    position:fixed;
-    inset:0;
-    background-image:
-      linear-gradient(rgba(155,89,255,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(155,89,255,0.04) 1px, transparent 1px);
-    background-size: 44px 44px;
-    pointer-events:none;
-    z-index:0;
-  }
-
-  body::after {
-    content:'';
-    position:fixed;
-    top:-40%;
-    right:-10%;
-    width:60%;
-    height:100%;
-    background: radial-gradient(ellipse, rgba(155,89,255,0.07) 0%, transparent 65%);
-    pointer-events:none;
-    z-index:0;
-  }
-
-  .app { position:relative; z-index:1; max-width:150000px; margin:0 auto; padding:20px; }
-
-  /* ===================== HEADER ===================== */
-  header {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:14px 28px;
-    background: linear-gradient(135deg, rgba(17,13,31,0.97), rgba(23,15,42,0.97));
-    border:1px solid var(--border);
-    border-radius:18px;
-    margin-bottom:24px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 0 60px rgba(155,89,255,0.1), inset 0 1px 0 rgba(155,89,255,0.15);
-  }
-
-  .logo-wrap {
-    display:flex;
-    align-items:center;
-    gap:14px;
-  }
-
-  /* SVG Rhino logo */
-  .rhino-svg {
-    width:46px;
-    height:46px;
-    filter: drop-shadow(0 0 10px rgba(155,89,255,0.7));
-  }
-
-  .logo-text {
-    display:flex;
-    flex-direction:column;
-    line-height:1;
-  }
-
-  .logo-main {
-    font-family:'Orbitron', monospace;
-    font-size:1.25rem;
-    font-weight:900;
-    letter-spacing:3px;
-    background: linear-gradient(90deg, var(--purple-bright), var(--magenta));
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    text-transform:uppercase;
-  }
-
-  .logo-sub {
-    font-family:'Orbitron', monospace;
-    font-size:0.55rem;
-    font-weight:400;
-    letter-spacing:4px;
-    color: var(--text-dim);
-    text-transform:uppercase;
-    margin-top:2px;
-  }
-
-  .header-right { display:flex; align-items:center; gap:14px; }
-
-  .live-badge {
-    display:flex; align-items:center; gap:6px;
-    background: rgba(255,51,102,0.12);
-    border:1px solid var(--neon-red);
-    padding:5px 12px;
-    border-radius:20px;
-    font-size:0.72rem;
-    font-weight:700;
-    letter-spacing:1px;
-    color: var(--neon-red);
-    text-transform:uppercase;
-  }
-
-  .live-dot {
-    width:7px; height:7px;
-    background: var(--neon-red);
-    border-radius:50%;
-    animation: pulse 1.2s infinite;
-  }
-
-  @keyframes pulse {
-    0%,100% { opacity:1; transform:scale(1); }
-    50% { opacity:0.3; transform:scale(1.5); }
-  }
-
-  .nav-tabs {
-    display:flex; gap:3px;
-    background: rgba(155,89,255,0.07);
-    border-radius:12px;
-    padding:4px;
-    border:1px solid var(--border);
-  }
-
-  .nav-tab {
-    padding:7px 16px;
-    border:none;
-    background:transparent;
-    color: var(--text-dim);
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:0.85rem;
-    letter-spacing:0.8px;
-    border-radius:9px;
-    cursor:pointer;
-    transition: all 0.2s;
-    text-transform:uppercase;
-  }
-
-  .nav-tab.active {
-    background: linear-gradient(135deg, rgba(155,89,255,0.35), rgba(224,64,251,0.2));
-    color: var(--purple-bright);
+  #login-screen.hidden { display:none; }
+  .login-box {
+    background:var(--bg-card);
     border:1px solid var(--border-bright);
-    box-shadow: 0 0 16px rgba(155,89,255,0.2);
+    border-radius:24px;
+    padding:48px 56px;
+    max-width:420px; width:90%;
+    text-align:center;
+    box-shadow:0 0 80px rgba(155,89,255,0.2);
   }
+  .login-logo { font-size:3rem; margin-bottom:12px; }
+  .login-title { font-family:'Orbitron',monospace; font-size:1.4rem; font-weight:900; background:linear-gradient(90deg,var(--purple-bright),var(--magenta)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; }
+  .login-sub { color:var(--text-dim); font-size:0.85rem; letter-spacing:2px; margin-bottom:32px; text-transform:uppercase; font-family:'Orbitron',monospace; }
+  .login-field { width:100%; background:rgba(155,89,255,0.08); border:1px solid rgba(155,89,255,0.25); border-radius:10px; padding:12px 16px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:1rem; outline:none; margin-bottom:12px; transition:border-color 0.2s; }
+  .login-field:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(155,89,255,0.1); }
+  .login-btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--purple),var(--purple-deep)); border:none; border-radius:10px; color:#fff; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1rem; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; margin-top:4px; }
+  .login-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(155,89,255,0.4); }
+  .login-error { color:var(--neon-red); font-size:0.82rem; margin-top:8px; min-height:20px; }
+  .login-connecting { color:var(--text-dim); font-size:0.82rem; margin-top:8px; }
 
-  .nav-tab:hover:not(.active) { color: var(--text); background: rgba(155,89,255,0.1); }
+  /* ── HEADER ── */
+  header { display:flex; align-items:center; justify-content:space-between; padding:14px 28px; background:linear-gradient(135deg,rgba(17,13,31,0.97),rgba(23,15,42,0.97)); border:1px solid var(--border); border-radius:18px; margin-bottom:24px; backdrop-filter:blur(12px); box-shadow:0 0 60px rgba(155,89,255,0.1),inset 0 1px 0 rgba(155,89,255,0.15); }
+  .logo-wrap { display:flex; align-items:center; gap:14px; }
+  .rhino-svg { width:46px; height:46px; filter:drop-shadow(0 0 10px rgba(155,89,255,0.7)); }
+  .logo-text { display:flex; flex-direction:column; line-height:1; }
+  .logo-main { font-family:'Orbitron',monospace; font-size:1.25rem; font-weight:900; letter-spacing:3px; background:linear-gradient(90deg,var(--purple-bright),var(--magenta)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-transform:uppercase; }
+  .logo-sub { font-family:'Orbitron',monospace; font-size:0.55rem; font-weight:400; letter-spacing:4px; color:var(--text-dim); text-transform:uppercase; margin-top:2px; }
+  .header-right { display:flex; align-items:center; gap:14px; }
+  .live-badge { display:flex; align-items:center; gap:6px; background:rgba(255,51,102,0.12); border:1px solid var(--neon-red); padding:5px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; letter-spacing:1px; color:var(--neon-red); text-transform:uppercase; }
+  .live-dot { width:7px; height:7px; background:var(--neon-red); border-radius:50%; animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(1.5)} }
+  .nav-tabs { display:flex; gap:3px; background:rgba(155,89,255,0.07); border-radius:12px; padding:4px; border:1px solid var(--border); }
+  .nav-tab { padding:7px 16px; border:none; background:transparent; color:var(--text-dim); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.85rem; letter-spacing:0.8px; border-radius:9px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .nav-tab.active { background:linear-gradient(135deg,rgba(155,89,255,0.35),rgba(224,64,251,0.2)); color:var(--purple-bright); border:1px solid var(--border-bright); box-shadow:0 0 16px rgba(155,89,255,0.2); }
+  .nav-tab:hover:not(.active) { color:var(--text); background:rgba(155,89,255,0.1); }
+  .logout-btn { padding:6px 14px; border:1px solid rgba(255,51,102,0.3); background:rgba(255,51,102,0.08); border-radius:8px; color:var(--neon-red); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.78rem; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; transition:all 0.2s; }
+  .logout-btn:hover { background:rgba(255,51,102,0.18); }
+  .connection-dot { width:8px; height:8px; border-radius:50%; background:#555; flex-shrink:0; transition:background 0.3s; }
+  .connection-dot.connected { background:var(--neon-green); box-shadow:0 0 6px var(--neon-green); }
+  .connection-dot.error { background:var(--neon-red); }
 
-  /* ===================== VIEWS ===================== */
+  /* ── VIEWS ── */
   .view { display:none; }
-  .view.active { display:block; animation: fadeIn 0.3s ease; }
+  .view.active { display:block; animation:fadeIn 0.3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  /* ── LOADING OVERLAY ── */
+  .loading-overlay { text-align:center; padding:60px; color:var(--text-dim); font-family:'Orbitron',monospace; font-size:0.8rem; letter-spacing:2px; }
+  .loading-spinner { width:32px; height:32px; border:3px solid rgba(155,89,255,0.2); border-top-color:var(--purple-bright); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
 
-  /* ===================== STATS ROW ===================== */
-  .stats-row {
-    display:grid; grid-template-columns: repeat(4,1fr); gap:16px; margin-bottom:24px;
-  }
-
-  .stat-card {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:20px 22px;
-    position:relative;
-    overflow:hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-
+  /* ── STATS ROW ── */
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:20px 22px; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; }
   .stat-card:hover { transform:translateY(-3px); box-shadow:0 10px 36px rgba(155,89,255,0.15); }
-
-  .stat-card::before {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0;
-    height:2px;
-    background: var(--accent, var(--purple));
-    box-shadow: 0 0 12px var(--accent, var(--purple));
-  }
-
-  .stat-card::after {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0; bottom:0;
-    background: radial-gradient(ellipse at top, rgba(155,89,255,0.05), transparent 60%);
-    pointer-events:none;
-  }
-
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent,var(--purple)); box-shadow:0 0 12px var(--accent,var(--purple)); }
+  .stat-card::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:radial-gradient(ellipse at top,rgba(155,89,255,0.05),transparent 60%); pointer-events:none; }
   .stat-card .icon { font-size:1.6rem; margin-bottom:8px; }
-  .stat-card .value {
-    font-family:'Orbitron', monospace;
-    font-size:1.85rem;
-    font-weight:700;
-    color: var(--accent, var(--purple-bright));
-    line-height:1;
-  }
-  .stat-card .label { font-size:0.75rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
-  .stat-card .change { font-size:0.78rem; color: var(--neon-green); font-weight:600; margin-top:4px; }
+  .stat-card .value { font-family:'Orbitron',monospace; font-size:1.85rem; font-weight:700; color:var(--accent,var(--purple-bright)); line-height:1; }
+  .stat-card .label { font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+  .stat-card .change { font-size:0.78rem; color:var(--neon-green); font-weight:600; margin-top:4px; }
 
-  /* ===================== SECTION TITLE ===================== */
-  .section-title {
-    font-family:'Orbitron', monospace;
-    font-size:0.8rem;
-    font-weight:700;
-    letter-spacing:3px;
-    text-transform:uppercase;
-    color: var(--text-dim);
-    margin-bottom:16px;
-    display:flex; align-items:center; gap:10px;
-  }
-  .section-title::after {
-    content:''; flex:1; height:1px;
-    background: linear-gradient(90deg, var(--border), transparent);
-  }
+  /* ── SECTION TITLE ── */
+  .section-title { font-family:'Orbitron',monospace; font-size:0.8rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+  .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
 
-  /* ===================== MAIN GRID ===================== */
-  .main-grid {
-    display:grid;
-    grid-template-columns: 1.45fr 1fr;
-    gap:20px;
-    margin-bottom:24px;
-  }
-
-  .leaderboard-card {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:22px;
-  }
-
-  .leaderboard-item {
-    display:flex;
-    align-items:center;
-    gap:14px;
-    padding:11px 14px;
-    border-radius:12px;
-    margin-bottom:7px;
-    cursor:pointer;
-    transition: background 0.2s, transform 0.2s;
-  }
-
-  .leaderboard-item:hover { background: rgba(155,89,255,0.06); transform:translateX(4px); }
-
-  .leaderboard-item.rank-1 { background: linear-gradient(135deg, rgba(155,89,255,0.18), rgba(224,64,251,0.06)); border:1px solid rgba(155,89,255,0.35); }
-  .leaderboard-item.rank-2 { background: linear-gradient(135deg, rgba(192,132,252,0.1), transparent); border:1px solid rgba(192,132,252,0.2); }
-  .leaderboard-item.rank-3 { background: linear-gradient(135deg, rgba(109,40,217,0.1), transparent); border:1px solid rgba(109,40,217,0.2); }
-
-  .rank-badge {
-    font-family:'Orbitron', monospace;
-    font-size:0.68rem;
-    font-weight:900;
-    width:32px; height:32px;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:8px;
-    flex-shrink:0;
-  }
-
-  .rank-1 .rank-badge { background: rgba(155,89,255,0.25); color: var(--purple-bright); box-shadow:0 0 10px rgba(155,89,255,0.3); }
-  .rank-2 .rank-badge { background: rgba(192,132,252,0.15); color: #C084FC; }
-  .rank-3 .rank-badge { background: rgba(109,40,217,0.15); color: #7C3AED; }
-  .leaderboard-item:not(.rank-1):not(.rank-2):not(.rank-3) .rank-badge { background: rgba(255,255,255,0.05); color: var(--text-dim); }
-
-  .avatar {
-    width:38px; height:38px;
-    border-radius:10px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:1.1rem;
-    background: linear-gradient(135deg, rgba(155,89,255,0.25), rgba(224,64,251,0.15));
-    flex-shrink:0;
-    border:1px solid rgba(155,89,255,0.2);
-  }
-
+  /* ── MAIN GRID ── */
+  .main-grid { display:grid; grid-template-columns:1.45fr 1fr; gap:20px; margin-bottom:24px; }
+  .leaderboard-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:22px; }
+  .leaderboard-item { display:flex; align-items:center; gap:14px; padding:11px 14px; border-radius:12px; margin-bottom:7px; cursor:pointer; transition:background 0.2s,transform 0.2s; }
+  .leaderboard-item:hover { background:rgba(155,89,255,0.06); transform:translateX(4px); }
+  .leaderboard-item.rank-1 { background:linear-gradient(135deg,rgba(155,89,255,0.18),rgba(224,64,251,0.06)); border:1px solid rgba(155,89,255,0.35); }
+  .leaderboard-item.rank-2 { background:linear-gradient(135deg,rgba(192,132,252,0.1),transparent); border:1px solid rgba(192,132,252,0.2); }
+  .leaderboard-item.rank-3 { background:linear-gradient(135deg,rgba(109,40,217,0.1),transparent); border:1px solid rgba(109,40,217,0.2); }
+  .rank-badge { font-family:'Orbitron',monospace; font-size:0.68rem; font-weight:900; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px; flex-shrink:0; }
+  .rank-1 .rank-badge { background:rgba(155,89,255,0.25); color:var(--purple-bright); box-shadow:0 0 10px rgba(155,89,255,0.3); }
+  .rank-2 .rank-badge { background:rgba(192,132,252,0.15); color:#C084FC; }
+  .rank-3 .rank-badge { background:rgba(109,40,217,0.15); color:#7C3AED; }
+  .leaderboard-item:not(.rank-1):not(.rank-2):not(.rank-3) .rank-badge { background:rgba(255,255,255,0.05); color:var(--text-dim); }
+  .avatar { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; background:linear-gradient(135deg,rgba(155,89,255,0.25),rgba(224,64,251,0.15)); flex-shrink:0; border:1px solid rgba(155,89,255,0.2); }
   .agent-info { flex:1; min-width:0; }
   .agent-name { font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .agent-role { font-size:0.7rem; color: var(--text-dim); }
-
+  .agent-role { font-size:0.7rem; color:var(--text-dim); }
   .agent-score { text-align:right; flex-shrink:0; }
-  .score-val { font-family:'Orbitron', monospace; font-size:1.1rem; font-weight:700; color: var(--purple-bright); }
-  .score-label { font-size:0.65rem; color: var(--text-dim); text-transform:uppercase; }
-
+  .score-val { font-family:'Orbitron',monospace; font-size:1.1rem; font-weight:700; color:var(--purple-bright); }
+  .score-label { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; }
   .progress-bar-wrap { margin-top:5px; }
-  .progress-bar-bg { height:3px; background: rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
-  .progress-bar-fill { height:100%; border-radius:2px; transition: width 0.9s ease; }
+  .progress-bar-bg { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+  .progress-bar-fill { height:100%; border-radius:2px; transition:width 0.9s ease; }
 
-  /* ===================== SCORECARD ===================== */
-  .scorecard-panel {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:20px;
-  }
-
+  /* ── SCORECARD ── */
+  .scorecard-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; }
   .kpi-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  .kpi-box { background:rgba(155,89,255,0.05); border:1px solid rgba(155,89,255,0.12); border-radius:10px; padding:12px; text-align:center; }
+  .kpi-val { font-family:'Orbitron',monospace; font-size:1.3rem; font-weight:700; }
+  .kpi-lbl { font-size:0.68rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.7px; margin-top:3px; }
 
-  .kpi-box {
-    background: rgba(155,89,255,0.05);
-    border:1px solid rgba(155,89,255,0.12);
-    border-radius:10px;
-    padding:12px;
-    text-align:center;
-  }
-
-  .kpi-val { font-family:'Orbitron', monospace; font-size:1.3rem; font-weight:700; }
-  .kpi-lbl { font-size:0.68rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:0.7px; margin-top:3px; }
-
-  /* ===================== ALERTS FEED ===================== */
-  .alerts-feed {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:20px;
-    max-height:300px;
-    overflow-y:auto;
-  }
-
+  /* ── ALERTS FEED ── */
+  .alerts-feed { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; max-height:300px; overflow-y:auto; }
   .alerts-feed::-webkit-scrollbar { width:4px; }
-  .alerts-feed::-webkit-scrollbar-thumb { background: rgba(155,89,255,0.4); border-radius:2px; }
-
-  .alert-item {
-    display:flex; align-items:center; gap:12px;
-    padding:9px 0;
-    border-bottom:1px solid rgba(155,89,255,0.08);
-    animation: slideIn 0.4s ease;
-  }
-
-  @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
-
+  .alerts-feed::-webkit-scrollbar-thumb { background:rgba(155,89,255,0.4); border-radius:2px; }
+  .alert-item { display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(155,89,255,0.08); animation:slideIn 0.4s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
   .alert-item:last-child { border-bottom:none; }
   .alert-icon { font-size:1.1rem; flex-shrink:0; }
   .alert-msg { font-size:0.87rem; flex:1; }
-  .alert-msg strong { color: var(--purple-bright); }
-  .alert-time { font-size:0.7rem; color: var(--text-dim); flex-shrink:0; }
+  .alert-msg strong { color:var(--purple-bright); }
+  .alert-time { font-size:0.7rem; color:var(--text-dim); flex-shrink:0; }
 
-  /* ===================== COMPETITIONS ===================== */
+  /* ── COMPETITIONS ── */
   .competitions-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
-
-  .comp-card {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:20px;
-    position:relative;
-    overflow:hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-
+  .comp-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; }
   .comp-card:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(155,89,255,0.12); }
-
-  .comp-card::after {
-    content:'';
-    position:absolute;
-    bottom:0; left:0; right:0;
-    height:60px;
-    background: linear-gradient(to top, rgba(155,89,255,0.04), transparent);
-    pointer-events:none;
-  }
-
   .comp-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
-  .comp-title { font-family:'Orbitron', monospace; font-size:0.82rem; font-weight:700; color: var(--purple-bright); }
-
-  .comp-badge {
-    font-size:0.63rem; font-weight:700; letter-spacing:1px;
-    text-transform:uppercase; padding:3px 8px; border-radius:6px;
-    background: rgba(0,255,136,0.12); color: var(--neon-green);
-    border:1px solid rgba(0,255,136,0.25);
-  }
-  .comp-badge.ended { background: rgba(255,51,102,0.1); color: var(--neon-red); border-color: rgba(255,51,102,0.25); }
-
-  .comp-desc { font-size:0.86rem; color: var(--text-dim); margin-bottom:12px; line-height:1.5; }
-
-  .comp-leader {
-    display:flex; align-items:center; gap:10px;
-    background: rgba(155,89,255,0.08);
-    border:1px solid rgba(155,89,255,0.18);
-    border-radius:10px;
-    padding:9px 12px;
-    margin-bottom:11px;
-  }
-
-  .comp-leader .crown { font-size:1rem; }
+  .comp-title { font-family:'Orbitron',monospace; font-size:0.82rem; font-weight:700; color:var(--purple-bright); }
+  .comp-badge { font-size:0.63rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(0,255,136,0.12); color:var(--neon-green); border:1px solid rgba(0,255,136,0.25); }
+  .comp-badge.ended { background:rgba(255,51,102,0.1); color:var(--neon-red); border-color:rgba(255,51,102,0.25); }
+  .comp-desc { font-size:0.86rem; color:var(--text-dim); margin-bottom:12px; line-height:1.5; }
+  .comp-leader { display:flex; align-items:center; gap:10px; background:rgba(155,89,255,0.08); border:1px solid rgba(155,89,255,0.18); border-radius:10px; padding:9px 12px; margin-bottom:11px; }
   .comp-leader-name { font-weight:700; font-size:0.88rem; }
-  .comp-leader-score { font-size:0.73rem; color: var(--purple-bright); }
+  .comp-leader-score { font-size:0.73rem; color:var(--purple-bright); }
   .comp-footer { display:flex; justify-content:space-between; align-items:center; }
-  .comp-time { font-size:0.73rem; color: var(--text-dim); }
-  .comp-prize { font-size:0.8rem; color: var(--purple-bright); font-weight:700; }
+  .comp-time { font-size:0.73rem; color:var(--text-dim); }
+  .comp-prize { font-size:0.8rem; color:var(--purple-bright); font-weight:700; }
 
-  /* ===================== MISSIONS ===================== */
+  /* ── MISSIONS ── */
   .missions-list { display:flex; flex-direction:column; gap:12px; }
-
-  .mission-item {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:15px 18px;
-    display:flex; align-items:center; gap:16px;
-    transition: transform 0.2s;
-  }
-
+  .mission-item { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:15px 18px; display:flex; align-items:center; gap:16px; transition:transform 0.2s; }
   .mission-item:hover { transform:translateX(4px); }
-
-  .mission-icon {
-    font-size:1.4rem;
-    width:46px; height:46px;
-    border-radius:12px;
-    display:flex; align-items:center; justify-content:center;
-    background: linear-gradient(135deg, rgba(155,89,255,0.2), rgba(224,64,251,0.1));
-    border:1px solid var(--border);
-    flex-shrink:0;
-  }
-
+  .mission-icon { font-size:1.4rem; width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,rgba(155,89,255,0.2),rgba(224,64,251,0.1)); border:1px solid var(--border); flex-shrink:0; }
   .mission-info { flex:1; }
   .mission-title { font-weight:700; font-size:0.93rem; margin-bottom:2px; }
-  .mission-desc { font-size:0.78rem; color: var(--text-dim); }
-
+  .mission-desc { font-size:0.78rem; color:var(--text-dim); }
   .mission-progress-wrap { width:120px; flex-shrink:0; text-align:right; }
-  .mission-pct { font-family:'Orbitron', monospace; font-size:0.88rem; font-weight:700; color: var(--neon-green); }
-  .mission-bar-bg { height:5px; background: rgba(255,255,255,0.06); border-radius:3px; margin-top:5px; overflow:hidden; }
-  .mission-bar-fill { height:100%; background: linear-gradient(90deg, var(--purple), var(--magenta)); border-radius:3px; }
-  .mission-coins { font-size:0.78rem; color: var(--purple-bright); font-weight:600; margin-top:3px; }
+  .mission-pct { font-family:'Orbitron',monospace; font-size:0.88rem; font-weight:700; color:var(--neon-green); }
+  .mission-bar-bg { height:5px; background:rgba(255,255,255,0.06); border-radius:3px; margin-top:5px; overflow:hidden; }
+  .mission-bar-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--magenta)); border-radius:3px; }
+  .mission-coins { font-size:0.78rem; color:var(--purple-bright); font-weight:600; margin-top:3px; }
 
-  /* ===================== BATTLES ===================== */
+  /* ── BATTLES ── */
   .battles-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-
-  .battle-card {
-    background: var(--bg-card);
-    border:1px solid rgba(155,89,255,0.25);
-    border-radius:16px;
-    padding:20px;
-    position:relative;
-    overflow:hidden;
-    text-align:center;
-  }
-
-  .battle-card::before {
-    content:'VS';
-    position:absolute;
-    top:50%; left:50%;
-    transform:translate(-50%,-50%);
-    font-family:'Orbitron', monospace;
-    font-size:2rem;
-    font-weight:900;
-    color: var(--magenta);
-    opacity:0.12;
-    letter-spacing:6px;
-    pointer-events:none;
-  }
-
-  .battle-header { font-family:'Orbitron', monospace; font-size:0.72rem; color: var(--magenta); letter-spacing:2px; margin-bottom:14px; }
+  .battle-card { background:var(--bg-card); border:1px solid rgba(155,89,255,0.25); border-radius:16px; padding:20px; position:relative; overflow:hidden; text-align:center; }
+  .battle-card::before { content:'VS'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; color:var(--magenta); opacity:0.12; letter-spacing:6px; pointer-events:none; }
+  .battle-header { font-family:'Orbitron',monospace; font-size:0.72rem; color:var(--magenta); letter-spacing:2px; margin-bottom:14px; }
   .battle-contestants { display:flex; justify-content:space-around; align-items:center; gap:10px; margin-bottom:14px; }
   .contestant { text-align:center; }
   .contestant .avatar { margin:0 auto 8px; width:44px; height:44px; font-size:1.3rem; }
   .contestant-name { font-weight:700; font-size:0.85rem; }
-  .contestant-score { font-family:'Orbitron', monospace; font-size:1.1rem; color: var(--neon-cyan); }
-  .battle-goal { font-size:0.78rem; color: var(--text-dim); margin-bottom:12px; }
+  .contestant-score { font-family:'Orbitron',monospace; font-size:1.1rem; color:var(--neon-cyan); }
+  .battle-goal { font-size:0.78rem; color:var(--text-dim); margin-bottom:12px; }
+  .battle-bar-wrap { height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; position:relative; }
+  .battle-bar-a { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--purple),rgba(155,89,255,0.5)); border-radius:4px; transition:width 1s; }
+  .battle-bar-b { position:absolute; right:0; top:0; bottom:0; background:linear-gradient(270deg,var(--magenta),rgba(224,64,251,0.5)); border-radius:4px; transition:width 1s; }
 
-  .battle-bar-wrap { height:8px; background: rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; position:relative; }
-  .battle-bar-a { position:absolute; left:0; top:0; bottom:0; background: linear-gradient(90deg, var(--purple), rgba(155,89,255,0.5)); border-radius:4px; transition: width 1s; }
-  .battle-bar-b { position:absolute; right:0; top:0; bottom:0; background: linear-gradient(270deg, var(--magenta), rgba(224,64,251,0.5)); border-radius:4px; transition: width 1s; }
-
-  /* ===================== REWARDS ===================== */
+  /* ── REWARDS ── */
   .rewards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-
-  .reward-card {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:22px;
-    text-align:center;
-    position:relative;
-    overflow:hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor:pointer;
-  }
-
+  .reward-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:22px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; cursor:pointer; }
   .reward-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(155,89,255,0.18); }
-
-  .reward-card::before {
-    content:'';
-    position:absolute; top:0; left:0; right:0; bottom:0;
-    background: radial-gradient(ellipse at top, rgba(155,89,255,0.07), transparent 60%);
-    pointer-events:none;
-  }
-
+  .reward-card::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:radial-gradient(ellipse at top,rgba(155,89,255,0.07),transparent 60%); pointer-events:none; }
   .reward-icon { font-size:2.4rem; margin-bottom:11px; }
   .reward-name { font-weight:700; font-size:0.97rem; margin-bottom:6px; }
-  .reward-desc { font-size:0.78rem; color: var(--text-dim); margin-bottom:14px; line-height:1.4; }
-  .reward-cost {
-    display:inline-flex; align-items:center; gap:6px;
-    background: rgba(155,89,255,0.12);
-    border:1px solid rgba(155,89,255,0.35);
-    padding:5px 14px;
-    border-radius:20px;
-    font-family:'Orbitron', monospace;
-    font-size:0.78rem;
-    color: var(--purple-bright);
-    font-weight:700;
-  }
+  .reward-desc { font-size:0.78rem; color:var(--text-dim); margin-bottom:14px; line-height:1.4; }
+  .reward-cost { display:inline-flex; align-items:center; gap:6px; background:rgba(155,89,255,0.12); border:1px solid rgba(155,89,255,0.35); padding:5px 14px; border-radius:20px; font-family:'Orbitron',monospace; font-size:0.78rem; color:var(--purple-bright); font-weight:700; }
 
-  /* ===================== ADMIN ===================== */
+  /* ── ADMIN ── */
   .admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-
-  .admin-card {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:22px;
-  }
-
-  .admin-card.full-width { grid-column: 1 / -1; }
-
-  .admin-card h3 {
-    font-family:'Orbitron', monospace;
-    font-size:0.78rem;
-    letter-spacing:2px;
-    color: var(--purple-bright);
-    text-transform:uppercase;
-    margin-bottom:16px;
-    padding-bottom:10px;
-    border-bottom:1px solid var(--border);
-  }
-
+  .admin-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:22px; }
+  .admin-card.full-width { grid-column:1 / -1; }
+  .admin-card h3 { font-family:'Orbitron',monospace; font-size:0.78rem; letter-spacing:2px; color:var(--purple-bright); text-transform:uppercase; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); }
   .form-group { margin-bottom:12px; }
-  .form-label { font-size:0.76rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; display:block; }
-
-  .form-input {
-    width:100%;
-    background: rgba(155,89,255,0.06);
-    border:1px solid rgba(155,89,255,0.2);
-    border-radius:8px;
-    padding:9px 13px;
-    color: var(--text);
-    font-family:'Rajdhani', sans-serif;
-    font-size:0.93rem;
-    outline:none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .form-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(155,89,255,0.1); }
-
-  .form-select {
-    width:100%;
-    background: rgba(155,89,255,0.06);
-    border:1px solid rgba(155,89,255,0.2);
-    border-radius:8px;
-    padding:9px 13px;
-    color: var(--text);
-    font-family:'Rajdhani', sans-serif;
-    font-size:0.93rem;
-    outline:none;
-    cursor:pointer;
-    appearance:none;
-  }
-
-  .form-select option { background: #130e22; color: #fff; }
-
-  .btn {
-    padding:9px 18px;
-    border:none;
-    border-radius:10px;
-    font-family:'Rajdhani', sans-serif;
-    font-weight:700;
-    font-size:0.88rem;
-    letter-spacing:0.5px;
-    cursor:pointer;
-    transition: all 0.2s;
-    text-transform:uppercase;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--purple), var(--purple-deep));
-    color: #fff;
-    width:100%;
-    box-shadow: 0 4px 16px rgba(155,89,255,0.25);
-  }
-
+  .form-label { font-size:0.76rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; display:block; }
+  .form-input { width:100%; background:rgba(155,89,255,0.06); border:1px solid rgba(155,89,255,0.2); border-radius:8px; padding:9px 13px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:0.93rem; outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+  .form-input:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(155,89,255,0.1); }
+  .form-select { width:100%; background:rgba(155,89,255,0.06); border:1px solid rgba(155,89,255,0.2); border-radius:8px; padding:9px 13px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:0.93rem; outline:none; cursor:pointer; appearance:none; }
+  .form-select option { background:#130e22; color:#fff; }
+  .btn { padding:9px 18px; border:none; border-radius:10px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.88rem; letter-spacing:0.5px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .btn-primary { background:linear-gradient(135deg,var(--purple),var(--purple-deep)); color:#fff; width:100%; box-shadow:0 4px 16px rgba(155,89,255,0.25); }
   .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(155,89,255,0.4); }
-
-  .btn-danger {
-    background: linear-gradient(135deg, var(--neon-red), #CC0044);
-    color: white;
-    box-shadow: 0 4px 16px rgba(255,51,102,0.2);
-  }
-
+  .btn-danger { background:linear-gradient(135deg,var(--neon-red),#CC0044); color:white; box-shadow:0 4px 16px rgba(255,51,102,0.2); }
   .btn-danger:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(255,51,102,0.35); }
-
-  .btn-sm {
-    padding:5px 12px;
-    font-size:0.75rem;
-    border-radius:7px;
-    width:auto;
-  }
-
-  .btn-ghost {
-    background: rgba(155,89,255,0.1);
-    border:1px solid var(--border);
-    color: var(--purple-bright);
-    width:auto;
-  }
-
-  .btn-ghost:hover { background: rgba(155,89,255,0.2); }
-
-  /* ===================== FEED EDITOR ===================== */
+  .btn-sm { padding:5px 12px; font-size:0.75rem; border-radius:7px; width:auto; }
+  .btn-ghost { background:rgba(155,89,255,0.1); border:1px solid var(--border); color:var(--purple-bright); width:auto; }
+  .btn-ghost:hover { background:rgba(155,89,255,0.2); }
   .feed-editor-list { display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; margin-bottom:14px; }
-  .feed-editor-list::-webkit-scrollbar { width:4px; }
-  .feed-editor-list::-webkit-scrollbar-thumb { background: rgba(155,89,255,0.3); border-radius:2px; }
-
-  .feed-edit-row {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background: rgba(155,89,255,0.05);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:8px 10px;
-  }
-
-  .feed-edit-icon-sel {
-    width:42px;
-    background: rgba(155,89,255,0.1);
-    border:1px solid var(--border);
-    border-radius:6px;
-    padding:5px;
-    color: var(--text);
-    font-size:0.9rem;
-    text-align:center;
-    outline:none;
-  }
-
-  .feed-edit-msg {
-    flex:1;
-    background: rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:6px;
-    padding:5px 10px;
-    color: var(--text);
-    font-family:'Rajdhani', sans-serif;
-    font-size:0.87rem;
-    outline:none;
-  }
-
-  .feed-edit-msg:focus { border-color: var(--purple); }
-
-  .feed-edit-time {
-    width:80px;
-    background: rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:6px;
-    padding:5px 8px;
-    color: var(--text-dim);
-    font-family:'Rajdhani', sans-serif;
-    font-size:0.82rem;
-    outline:none;
-  }
-
-  .feed-del-btn {
-    background: rgba(255,51,102,0.12);
-    border:1px solid rgba(255,51,102,0.25);
-    border-radius:6px;
-    padding:4px 8px;
-    color: var(--neon-red);
-    cursor:pointer;
-    font-size:0.85rem;
-    transition: all 0.2s;
-    flex-shrink:0;
-  }
-
-  .feed-del-btn:hover { background: rgba(255,51,102,0.25); }
-
-  .feed-add-row {
-    display:flex; gap:8px; align-items:center;
-    background: rgba(155,89,255,0.04);
-    border:1px dashed rgba(155,89,255,0.2);
-    border-radius:10px;
-    padding:10px 12px;
-    margin-bottom:10px;
-  }
-
-  /* ===================== AGENT TABLE ===================== */
-  .agent-table {
-    width:100%;
-    border-collapse:collapse;
-  }
-
-  .agent-table th {
-    font-family:'Orbitron', monospace;
-    font-size:0.65rem;
-    letter-spacing:1.5px;
-    color: var(--text-dim);
-    text-align:left;
-    padding:8px 10px;
-    border-bottom:1px solid var(--border);
-    text-transform:uppercase;
-  }
-
-  .agent-table td {
-    padding:8px 10px;
-    border-bottom:1px solid rgba(155,89,255,0.06);
-    font-size:0.88rem;
-    vertical-align:middle;
-  }
-
+  .feed-edit-row { display:flex; align-items:center; gap:8px; background:rgba(155,89,255,0.05); border:1px solid var(--border); border-radius:10px; padding:8px 10px; }
+  .feed-edit-icon-sel { width:42px; background:rgba(155,89,255,0.1); border:1px solid var(--border); border-radius:6px; padding:5px; color:var(--text); font-size:0.9rem; text-align:center; outline:none; }
+  .feed-edit-msg { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:5px 10px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:0.87rem; outline:none; }
+  .feed-edit-msg:focus { border-color:var(--purple); }
+  .feed-edit-time { width:80px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:5px 8px; color:var(--text-dim); font-family:'Rajdhani',sans-serif; font-size:0.82rem; outline:none; }
+  .feed-del-btn { background:rgba(255,51,102,0.12); border:1px solid rgba(255,51,102,0.25); border-radius:6px; padding:4px 8px; color:var(--neon-red); cursor:pointer; font-size:0.85rem; transition:all 0.2s; flex-shrink:0; }
+  .feed-del-btn:hover { background:rgba(255,51,102,0.25); }
+  .feed-add-row { display:flex; gap:8px; align-items:center; background:rgba(155,89,255,0.04); border:1px dashed rgba(155,89,255,0.2); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+  .agent-table { width:100%; border-collapse:collapse; }
+  .agent-table th { font-family:'Orbitron',monospace; font-size:0.65rem; letter-spacing:1.5px; color:var(--text-dim); text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); text-transform:uppercase; }
+  .agent-table td { padding:8px 10px; border-bottom:1px solid rgba(155,89,255,0.06); font-size:0.88rem; vertical-align:middle; }
   .agent-table tr:last-child td { border-bottom:none; }
-
-  .agent-table .editable-cell input {
-    background: rgba(155,89,255,0.06);
-    border:1px solid transparent;
-    border-radius:5px;
-    padding:3px 7px;
-    color: var(--text);
-    font-family:'Rajdhani', sans-serif;
-    font-size:0.88rem;
-    width:100%;
-    outline:none;
-    transition: border-color 0.2s;
-  }
-
-  .agent-table .editable-cell input:focus { border-color: var(--purple); background: rgba(155,89,255,0.1); }
-
-  /* ===================== COIN WALLET ===================== */
-  .coin-wallet {
-    display:flex; align-items:center; gap:8px;
-    background: rgba(155,89,255,0.1);
-    border:1px solid var(--border-bright);
-    padding:7px 14px;
-    border-radius:10px;
-    font-family:'Orbitron', monospace;
-    font-size:0.95rem;
-    font-weight:700;
-    color: var(--purple-bright);
-    cursor:pointer;
-    transition: all 0.2s;
-    box-shadow: 0 0 16px rgba(155,89,255,0.1);
-  }
-
-  .coin-wallet:hover { background: rgba(155,89,255,0.18); }
-
-  /* ===================== CELEBRATION ===================== */
-  #celebration {
-    position:fixed; inset:0; z-index:1000;
-    background: rgba(7,4,15,0.93);
-    display:none;
-    align-items:center; justify-content:center;
-    flex-direction:column;
-    text-align:center;
-  }
-
-  #celebration.show { display:flex; animation: fadeIn 0.3s ease; }
-
-  .celebration-content {
-    background: var(--bg-card);
-    border:2px solid var(--purple);
-    border-radius:24px;
-    padding:48px 56px;
-    max-width:500px;
-    position:relative;
-    box-shadow: 0 0 80px rgba(155,89,255,0.3);
-  }
-
-  .celebration-emoji { font-size:4rem; margin-bottom:16px; animation: bounce 0.6s ease infinite alternate; }
-
-  @keyframes bounce { from { transform:translateY(0); } to { transform:translateY(-12px); } }
-
-  .celebration-title {
-    font-family:'Orbitron', monospace;
-    font-size:1.7rem;
-    font-weight:900;
-    background: linear-gradient(90deg, var(--purple-bright), var(--magenta));
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    margin-bottom:8px;
-  }
-
-  .celebration-sub { color: var(--text-dim); margin-bottom:18px; font-size:0.98rem; }
-  .celebration-coins { font-family:'Orbitron', monospace; font-size:1.4rem; color: var(--purple-bright); margin-bottom:24px; }
-
+  .agent-table .editable-cell input { background:rgba(155,89,255,0.06); border:1px solid transparent; border-radius:5px; padding:3px 7px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:0.88rem; width:100%; outline:none; transition:border-color 0.2s; }
+  .agent-table .editable-cell input:focus { border-color:var(--purple); background:rgba(155,89,255,0.1); }
+  .coin-wallet { display:flex; align-items:center; gap:8px; background:rgba(155,89,255,0.1); border:1px solid var(--border-bright); padding:7px 14px; border-radius:10px; font-family:'Orbitron',monospace; font-size:0.95rem; font-weight:700; color:var(--purple-bright); cursor:pointer; transition:all 0.2s; box-shadow:0 0 16px rgba(155,89,255,0.1); }
+  .coin-wallet:hover { background:rgba(155,89,255,0.18); }
+  #celebration { position:fixed; inset:0; z-index:1000; background:rgba(7,4,15,0.93); display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center; }
+  #celebration.show { display:flex; animation:fadeIn 0.3s ease; }
+  .celebration-content { background:var(--bg-card); border:2px solid var(--purple); border-radius:24px; padding:48px 56px; max-width:500px; position:relative; box-shadow:0 0 80px rgba(155,89,255,0.3); }
+  .celebration-emoji { font-size:4rem; margin-bottom:16px; animation:bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-12px)} }
+  .celebration-title { font-family:'Orbitron',monospace; font-size:1.7rem; font-weight:900; background:linear-gradient(90deg,var(--purple-bright),var(--magenta)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+  .celebration-sub { color:var(--text-dim); margin-bottom:18px; font-size:0.98rem; }
+  .celebration-coins { font-family:'Orbitron',monospace; font-size:1.4rem; color:var(--purple-bright); margin-bottom:24px; }
   .confetti-pieces { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:24px; }
-
-  .confetti-piece {
-    position:absolute;
-    border-radius:1px;
-    animation: confettiFall linear forwards;
-  }
-
-  @keyframes confettiFall {
-    0% { transform: translateY(-20px) rotate(0deg); opacity:1; }
-    100% { transform: translateY(320px) rotate(720deg); opacity:0; }
-  }
-
-  /* ===================== RESPONSIVE ===================== */
-  @media(max-width:960px) {
-    .stats-row { grid-template-columns:1fr 1fr; }
-    .main-grid, .competitions-grid, .battles-grid, .admin-grid { grid-template-columns:1fr; }
-    .rewards-grid { grid-template-columns:1fr 1fr; }
-    .kpi-row { grid-template-columns:1fr 1fr; }
-    .admin-card.full-width { grid-column: auto; }
-  }
-
-  @media(max-width:600px) {
-    .nav-tabs { display:none; }
-    .rewards-grid { grid-template-columns:1fr; }
-  }
-
-  ::-webkit-scrollbar { width:6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(155,89,255,0.25); border-radius:3px; }
-
-  .tab-row {
-    display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;
-  }
-
-  .tab-pill {
-    padding:5px 14px;
-    border-radius:20px;
-    font-size:0.78rem;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:0.8px;
-    cursor:pointer;
-    border:1px solid var(--border);
-    background: rgba(155,89,255,0.06);
-    color: var(--text-dim);
-    transition: all 0.2s;
-  }
-
-  .tab-pill.active { background: rgba(155,89,255,0.2); color: var(--purple-bright); border-color: var(--border-bright); }
-  .tab-pill:hover:not(.active) { color: var(--text); background: rgba(155,89,255,0.1); }
-
+  .confetti-piece { position:absolute; border-radius:1px; animation:confettiFall linear forwards; }
+  @keyframes confettiFall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(320px) rotate(720deg);opacity:0} }
+  .tab-row { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+  .tab-pill { padding:5px 14px; border-radius:20px; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; cursor:pointer; border:1px solid var(--border); background:rgba(155,89,255,0.06); color:var(--text-dim); transition:all 0.2s; }
+  .tab-pill.active { background:rgba(155,89,255,0.2); color:var(--purple-bright); border-color:var(--border-bright); }
+  .tab-pill:hover:not(.active) { color:var(--text); background:rgba(155,89,255,0.1); }
   .admin-sub-view { display:none; }
   .admin-sub-view.active { display:block; }
-
-  .info-note {
-    font-size:0.78rem;
-    color: var(--text-dim);
-    background: rgba(155,89,255,0.06);
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:8px 12px;
-    margin-bottom:14px;
-    line-height:1.5;
-  }
+  .info-note { font-size:0.78rem; color:var(--text-dim); background:rgba(155,89,255,0.06); border:1px solid var(--border); border-radius:8px; padding:8px 12px; margin-bottom:14px; line-height:1.5; }
+  .save-indicator { font-size:0.72rem; color:var(--neon-green); margin-left:8px; opacity:0; transition:opacity 0.3s; }
+  .save-indicator.show { opacity:1; }
+  @media(max-width:960px) { .stats-row{grid-template-columns:1fr 1fr} .main-grid,.competitions-grid,.battles-grid,.admin-grid{grid-template-columns:1fr} .rewards-grid{grid-template-columns:1fr 1fr} .kpi-row{grid-template-columns:1fr 1fr} .admin-card.full-width{grid-column:auto} }
+  @media(max-width:600px) { .nav-tabs{display:none} .rewards-grid{grid-template-columns:1fr} }
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(155,89,255,0.25); border-radius:3px; }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- HEADER -->
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🦏</div>
+    <div class="login-title">Rhino Arena</div>
+    <div class="login-sub">Entertainment · Admin Portal</div>
+    <input class="login-field" type="text" id="login-username" placeholder="Username" autocomplete="username">
+    <input class="login-field" type="password" id="login-password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">🔐 Sign In</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-connecting" id="login-status">Connecting to database…</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════════════════ -->
+<div class="app" id="main-app" style="display:none;">
+
   <header>
     <div class="logo-wrap">
-      <!-- Rhino SVG Logo -->
       <svg class="rhino-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#C084FC"/>
-            <stop offset="100%" style="stop-color:#7C3AED"/>
-          </linearGradient>
-          <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#E040FB"/>
-            <stop offset="100%" style="stop-color:#9B59FF"/>
-          </linearGradient>
+          <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#C084FC"/><stop offset="100%" style="stop-color:#7C3AED"/></linearGradient>
+          <linearGradient id="rg2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#E040FB"/><stop offset="100%" style="stop-color:#9B59FF"/></linearGradient>
         </defs>
-        <!-- Body -->
         <ellipse cx="52" cy="60" rx="32" ry="22" fill="url(#rg1)" opacity="0.9"/>
-        <!-- Head -->
         <ellipse cx="26" cy="52" rx="16" ry="14" fill="url(#rg1)"/>
-        <!-- Horn -->
         <polygon points="14,44 10,22 20,40" fill="url(#rg2)"/>
-        <!-- Small horn -->
         <polygon points="20,42 17,32 24,40" fill="url(#rg2)" opacity="0.8"/>
-        <!-- Eye -->
         <circle cx="20" cy="50" r="3" fill="#07040F"/>
         <circle cx="21" cy="49" r="1" fill="#fff" opacity="0.6"/>
-        <!-- Ear -->
         <ellipse cx="30" cy="40" rx="5" ry="7" fill="#9B59FF" opacity="0.7"/>
-        <!-- Legs -->
         <rect x="32" y="78" width="8" height="14" rx="3" fill="url(#rg1)" opacity="0.8"/>
         <rect x="44" y="80" width="8" height="12" rx="3" fill="url(#rg1)" opacity="0.8"/>
         <rect x="57" y="79" width="8" height="13" rx="3" fill="url(#rg1)" opacity="0.8"/>
         <rect x="69" y="77" width="8" height="15" rx="3" fill="url(#rg1)" opacity="0.8"/>
-        <!-- Tail -->
         <path d="M84,56 Q98,50 94,40" stroke="#C084FC" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <!-- Nostril -->
         <ellipse cx="13" cy="55" rx="2" ry="1.2" fill="#6D28D9"/>
-        <!-- Back ridge -->
         <path d="M38,40 Q52,32 70,38" stroke="#E040FB" stroke-width="2" fill="none" opacity="0.5"/>
       </svg>
       <div class="logo-text">
@@ -926,357 +324,219 @@
     </div>
 
     <div class="header-right">
+      <div class="connection-dot" id="conn-dot" title="Supabase connection"></div>
       <div class="coin-wallet" onclick="showView('rewards')">🦏 <span id="wallet-coins">50000</span></div>
       <div class="live-badge"><div class="live-dot"></div> Live</div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
 
-  <!-- ========== DASHBOARD ========== -->
+  <!-- DASHBOARD -->
   <div class="view active" id="view-dashboard">
     <div class="stats-row">
-      <div class="stat-card" style="--accent:var(--purple-bright)">
-        <div class="icon">🏆</div>
-        <div class="value" id="stat-chats">1,247</div>
-        <div class="label">Chats Resolved Today</div>
-        <div class="change">↑ +12% vs yesterday</div>
-      </div>
-      <div class="stat-card" style="--accent:var(--neon-green)">
-        <div class="icon">⚡</div>
-        <div class="value" id="stat-time">1m 42s</div>
-        <div class="label">Avg Response Time</div>
-        <div class="change">↓ 18% faster</div>
-      </div>
-      <div class="stat-card" style="--accent:var(--neon-cyan)">
-        <div class="icon">⭐</div>
-        <div class="value" id="stat-csat">4.8</div>
-        <div class="label">CSAT Score</div>
-        <div class="change">↑ +0.3 this week</div>
-      </div>
-      <div class="stat-card" style="--accent:var(--magenta)">
-        <div class="icon">🔥</div>
-        <div class="value" id="stat-streak">7</div>
-        <div class="label">Team Win Streak</div>
-        <div class="change">Days above target</div>
-      </div>
+      <div class="stat-card" style="--accent:var(--purple-bright)"><div class="icon">🏆</div><div class="value" id="stat-chats">—</div><div class="label">Chats Resolved Today</div><div class="change" id="stat-chats-change">↑ Loading…</div></div>
+      <div class="stat-card" style="--accent:var(--neon-green)"><div class="icon">⚡</div><div class="value" id="stat-time">—</div><div class="label">Avg Response Time</div><div class="change">↓ From Intercom live</div></div>
+      <div class="stat-card" style="--accent:var(--neon-cyan)"><div class="icon">⭐</div><div class="value" id="stat-csat">—</div><div class="label">CSAT Score</div><div class="change">↑ Live from ratings</div></div>
+      <div class="stat-card" style="--accent:var(--magenta)"><div class="icon">🔥</div><div class="value" id="stat-streak">—</div><div class="label">Team Win Streak</div><div class="change" id="stat-streak-change">Days above target</div></div>
     </div>
-
     <div class="main-grid">
       <div class="leaderboard-card">
         <div class="section-title">🏅 Live Leaderboard</div>
-        <div id="leaderboard-list"></div>
+        <div id="leaderboard-list"><div class="loading-overlay"><div class="loading-spinner"></div>Loading agents…</div></div>
       </div>
       <div>
         <div class="scorecard-panel" style="margin-bottom:18px;">
-          <div class="section-title">📊 Your Scorecard — Mihail</div>
+          <div class="section-title">📊 Team Scorecard</div>
           <div class="kpi-row">
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">48</div><div class="kpi-lbl">Chats</div></div>
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-cyan)">1:38</div><div class="kpi-lbl">Avg RT</div></div>
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--purple-bright)">4.9</div><div class="kpi-lbl">CSAT</div></div>
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-red)">2</div><div class="kpi-lbl">Escalations</div></div>
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--magenta)">50000</div><div class="kpi-lbl">Coins</div></div>
-            <div class="kpi-box"><div class="kpi-val" style="color:var(--neon-green)">#3</div><div class="kpi-lbl">Rank</div></div>
+            <div class="kpi-box"><div class="kpi-val" id="sc-chats" style="color:var(--neon-green)">—</div><div class="kpi-lbl">Total Chats</div></div>
+            <div class="kpi-box"><div class="kpi-val" id="sc-rt" style="color:var(--neon-cyan)">—</div><div class="kpi-lbl">Best RT</div></div>
+            <div class="kpi-box"><div class="kpi-val" id="sc-csat" style="color:var(--purple-bright)">—</div><div class="kpi-lbl">Top CSAT</div></div>
+            <div class="kpi-box"><div class="kpi-val" id="sc-agents" style="color:var(--neon-red)">—</div><div class="kpi-lbl">Agents</div></div>
+            <div class="kpi-box"><div class="kpi-val" id="sc-coins" style="color:var(--magenta)">—</div><div class="kpi-lbl">Total Coins</div></div>
+            <div class="kpi-box"><div class="kpi-val" id="sc-rank" style="color:var(--neon-green)">#1</div><div class="kpi-lbl">Top Rank</div></div>
           </div>
-          <button class="btn btn-primary" onclick="triggerCelebration('Mihail', 'top CSAT score', 50)">🎉 Claim Daily Bonus (+50 coins)</button>
+          <button class="btn btn-primary" onclick="triggerCelebration('Team', 'Daily bonus claimed', 50)">🎉 Claim Daily Bonus (+50 coins)</button>
         </div>
         <div class="alerts-feed">
           <div class="section-title">📡 Live Feed</div>
-          <div id="alerts-feed-list"></div>
+          <div id="alerts-feed-list"><div class="loading-overlay" style="padding:20px;"><div class="loading-spinner" style="width:20px;height:20px;"></div></div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ========== COMPETITIONS ========== -->
+  <!-- COMPETITIONS -->
   <div class="view" id="view-competitions">
     <div class="section-title" style="margin-bottom:20px;">🏁 Active Competitions</div>
-    <div class="competitions-grid" id="competitions-grid"></div>
+    <div class="competitions-grid" id="competitions-grid"><div class="loading-overlay"><div class="loading-spinner"></div>Loading competitions…</div></div>
   </div>
 
-  <!-- ========== MISSIONS ========== -->
+  <!-- MISSIONS -->
   <div class="view" id="view-missions">
     <div class="section-title" style="margin-bottom:20px;">🎯 Daily Missions</div>
-    <div class="missions-list" id="missions-list"></div>
+    <div class="missions-list" id="missions-list"><div class="loading-overlay"><div class="loading-spinner"></div>Loading missions…</div></div>
   </div>
 
-  <!-- ========== BATTLES ========== -->
+  <!-- BATTLES -->
   <div class="view" id="view-battles">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <div class="section-title" style="margin-bottom:0;">⚔️ Agent Battles</div>
       <button class="btn btn-danger" onclick="startBattle()">⚔️ Challenge Someone (50 🦏)</button>
     </div>
-    <div class="battles-grid" id="battles-grid"></div>
+    <div class="battles-grid" id="battles-grid"><div class="loading-overlay"><div class="loading-spinner"></div>Loading battles…</div></div>
   </div>
 
-  <!-- ========== REWARDS ========== -->
+  <!-- REWARDS -->
   <div class="view" id="view-rewards">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <div class="section-title" style="margin-bottom:0;">🛍️ Reward Store</div>
-      <div class="coin-wallet">🦏 <span id="wallet-coins2">30000</span> coins</div>
+      <div class="coin-wallet">🦏 <span id="wallet-coins2">—</span> coins</div>
     </div>
-    <div class="rewards-grid" id="rewards-grid"></div>
+    <div class="rewards-grid" id="rewards-grid"><div class="loading-overlay"><div class="loading-spinner"></div>Loading rewards…</div></div>
   </div>
 
-  <!-- ========== ADMIN ========== -->
+  <!-- ADMIN -->
   <div class="view" id="view-admin">
     <div class="section-title" style="margin-bottom:16px;">⚙️ Admin Panel</div>
-
-    <!-- Admin Sub-nav -->
     <div class="tab-row">
-      <div class="tab-pill active" onclick="showAdminTab('competition')">🏁 Competitions</div>
-      <div class="tab-pill" onclick="showAdminTab('missions')">🎯 Missions</div>
-      <div class="tab-pill" onclick="showAdminTab('agents')">👥 Agents</div>
-      <div class="tab-pill" onclick="showAdminTab('coins')">🦏 Award Coins</div>
-      <div class="tab-pill" onclick="showAdminTab('feed')">📡 Live Feed</div>
-      <div class="tab-pill" onclick="showAdminTab('stats')">📊 Stats Board</div>
-      <div class="tab-pill" onclick="showAdminTab('rewards')">🛍️ Reward Store</div>
+      <div class="tab-pill active" onclick="showAdminTab('competition',this)">🏁 Competitions</div>
+      <div class="tab-pill" onclick="showAdminTab('missions',this)">🎯 Missions</div>
+      <div class="tab-pill" onclick="showAdminTab('agents',this)">👥 Agents</div>
+      <div class="tab-pill" onclick="showAdminTab('coins',this)">🦏 Award Coins</div>
+      <div class="tab-pill" onclick="showAdminTab('feed',this)">📡 Live Feed</div>
+      <div class="tab-pill" onclick="showAdminTab('stats',this)">📊 Stats Board</div>
+      <div class="tab-pill" onclick="showAdminTab('rewards',this)">🛍️ Reward Store</div>
     </div>
 
-    <!-- Tab: Competitions -->
+    <!-- Competitions -->
     <div class="admin-sub-view active" id="admin-competition">
       <div class="admin-grid">
         <div class="admin-card">
           <h3>Launch New Competition</h3>
-          <div class="form-group">
-            <label class="form-label">Competition Name</label>
-            <input class="form-input" type="text" placeholder="e.g. Speed King — Weekend Blitz" id="new-comp-name">
-          </div>
-          <div class="form-group">
-            <label class="form-label">KPI to Track</label>
-            <select class="form-select" id="new-comp-kpi">
-              <option>Chats Resolved</option>
-              <option>Average Response Time</option>
-              <option>CSAT Score</option>
-              <option>High-Rated Chats</option>
-              <option>First Reply Time</option>
-              <option>Escalations Prevented</option>
-              <option>VIP Complaints Resolved</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Description</label>
-            <input class="form-input" type="text" placeholder="Describe the competition..." id="new-comp-desc">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Duration</label>
-            <select class="form-select" id="new-comp-duration">
-              <option>Today Only</option>
-              <option>3 Days</option>
-              <option>This Week</option>
-              <option>This Month</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Prize</label>
-            <input class="form-input" type="text" placeholder="e.g. €50 voucher, 500 coins" id="new-comp-prize">
-          </div>
+          <div class="form-group"><label class="form-label">Competition Name</label><input class="form-input" type="text" placeholder="e.g. Speed King — Weekend Blitz" id="new-comp-name"></div>
+          <div class="form-group"><label class="form-label">KPI to Track</label><select class="form-select" id="new-comp-kpi"><option>Chats Resolved</option><option>Average Response Time</option><option>CSAT Score</option><option>High-Rated Chats</option><option>First Reply Time</option><option>Escalations Prevented</option><option>VIP Complaints Resolved</option></select></div>
+          <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" placeholder="Describe the competition…" id="new-comp-desc"></div>
+          <div class="form-group"><label class="form-label">Duration</label><select class="form-select" id="new-comp-duration"><option>Today Only</option><option>3 Days</option><option>This Week</option><option>This Month</option></select></div>
+          <div class="form-group"><label class="form-label">Prize</label><input class="form-input" type="text" placeholder="e.g. €50 voucher, 500 coins" id="new-comp-prize"></div>
           <button class="btn btn-primary" onclick="launchCompetition()">🚀 Launch Competition</button>
         </div>
-
-        <div class="admin-card">
-          <h3>Manage Active Competitions</h3>
-          <div id="admin-comp-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-        </div>
+        <div class="admin-card"><h3>Manage Active Competitions</h3><div id="admin-comp-list"></div></div>
       </div>
     </div>
 
-    <!-- Tab: Missions -->
+    <!-- Missions -->
     <div class="admin-sub-view" id="admin-missions">
       <div class="admin-grid">
         <div class="admin-card">
           <h3>Create New Mission</h3>
-          <div class="form-group">
-            <label class="form-label">Icon (emoji)</label>
-            <input class="form-input" type="text" placeholder="e.g. ⚡" id="new-miss-icon" maxlength="4" style="width:80px;display:inline-block;">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Mission Title</label>
-            <input class="form-input" type="text" placeholder="e.g. Chat Blitz: 40 in a shift" id="new-miss-title">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Description</label>
-            <input class="form-input" type="text" placeholder="Describe the challenge..." id="new-miss-desc">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Starting Progress % (0-100)</label>
-            <input class="form-input" type="number" placeholder="0" min="0" max="100" id="new-miss-progress">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Coin Reward</label>
-            <input class="form-input" type="number" placeholder="e.g. 100" id="new-miss-coins">
-          </div>
+          <div class="form-group"><label class="form-label">Icon (emoji)</label><input class="form-input" type="text" placeholder="e.g. ⚡" id="new-miss-icon" maxlength="4" style="width:80px;display:inline-block;"></div>
+          <div class="form-group"><label class="form-label">Mission Title</label><input class="form-input" type="text" placeholder="e.g. Chat Blitz: 40 in a shift" id="new-miss-title"></div>
+          <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" placeholder="Describe the challenge…" id="new-miss-desc"></div>
+          <div class="form-group"><label class="form-label">Starting Progress % (0-100)</label><input class="form-input" type="number" placeholder="0" min="0" max="100" id="new-miss-progress"></div>
+          <div class="form-group"><label class="form-label">Coin Reward</label><input class="form-input" type="number" placeholder="e.g. 100" id="new-miss-coins"></div>
           <button class="btn btn-primary" onclick="createMission()">✅ Create Mission</button>
         </div>
-        <div class="admin-card">
-          <h3>Edit / Delete Missions</h3>
-          <div id="admin-mission-list" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;"></div>
-        </div>
+        <div class="admin-card"><h3>Edit / Delete Missions</h3><div id="admin-mission-list" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;"></div></div>
       </div>
     </div>
 
-    <!-- Tab: Agents -->
+    <!-- Agents -->
     <div class="admin-sub-view" id="admin-agents">
       <div class="admin-card full-width">
         <h3>Team Roster — Edit Agents</h3>
-        <div class="info-note">Click any field to edit directly. Changes update the leaderboard in real time.</div>
-        <div style="overflow-x:auto;">
-          <table class="agent-table" id="agent-table"></table>
-        </div>
+        <div class="info-note">Click any field to edit directly. Changes save to Supabase and update the leaderboard in real time.</div>
+        <div style="overflow-x:auto;"><table class="agent-table" id="agent-table"></table></div>
         <div style="margin-top:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-          <div style="flex:1;min-width:140px;">
-            <label class="form-label">Name</label>
-            <input class="form-input" type="text" placeholder="Full name" id="new-agent-name">
-          </div>
-          <div style="flex:1;min-width:120px;">
-            <label class="form-label">Role</label>
-            <select class="form-select" id="new-agent-role">
-              <option>Support Agent</option>
-              <option>Senior Agent</option>
-              <option>Team Lead</option>
-              <option>VIP Support</option>
-            </select>
-          </div>
-          <div style="width:60px;">
-            <label class="form-label">Emoji</label>
-            <input class="form-input" type="text" placeholder="🎯" id="new-agent-emoji" maxlength="4" style="text-align:center;">
-          </div>
-          <div style="width:100px;">
-            <label class="form-label">Start Coins</label>
-            <input class="form-input" type="number" value="100" id="new-agent-coins">
-          </div>
+          <div style="flex:1;min-width:140px;"><label class="form-label">Name</label><input class="form-input" type="text" placeholder="Full name" id="new-agent-name"></div>
+          <div style="flex:1;min-width:120px;"><label class="form-label">Role</label><select class="form-select" id="new-agent-role"><option>Support Agent</option><option>Senior Agent</option><option>Team Lead</option><option>VIP Support</option></select></div>
+          <div style="width:80px;"><label class="form-label">Email</label><input class="form-input" type="text" placeholder="a@co.com" id="new-agent-email"></div>
+          <div style="width:60px;"><label class="form-label">Emoji</label><input class="form-input" type="text" placeholder="🎯" id="new-agent-emoji" maxlength="4" style="text-align:center;"></div>
+          <div style="width:100px;"><label class="form-label">Start Coins</label><input class="form-input" type="number" value="100" id="new-agent-coins"></div>
           <button class="btn btn-primary btn-sm" style="width:auto;margin-bottom:0;" onclick="addAgent()">➕ Add Agent</button>
         </div>
       </div>
     </div>
 
-    <!-- Tab: Coins -->
+    <!-- Coins -->
     <div class="admin-sub-view" id="admin-coins">
       <div class="admin-grid">
         <div class="admin-card">
           <h3>Award Coins Manually</h3>
-          <div class="form-group">
-            <label class="form-label">Agent</label>
-            <select class="form-select" id="award-agent"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Coins to Award</label>
-            <input class="form-input" type="number" placeholder="e.g. 100" id="award-coins">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Reason</label>
-            <input class="form-input" type="text" placeholder="e.g. Outstanding VIP complaint resolution" id="award-reason">
-          </div>
+          <div class="form-group"><label class="form-label">Agent</label><select class="form-select" id="award-agent"></select></div>
+          <div class="form-group"><label class="form-label">Coins to Award</label><input class="form-input" type="number" placeholder="e.g. 100" id="award-coins"></div>
+          <div class="form-group"><label class="form-label">Reason</label><input class="form-input" type="text" placeholder="e.g. Outstanding VIP complaint resolution" id="award-reason"></div>
           <button class="btn btn-primary" onclick="awardCoins()">🦏 Award Coins & Celebrate</button>
         </div>
         <div class="admin-card">
           <h3>Deduct Coins</h3>
-          <div class="form-group">
-            <label class="form-label">Agent</label>
-            <select class="form-select" id="deduct-agent"></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Coins to Deduct</label>
-            <input class="form-input" type="number" placeholder="e.g. 50" id="deduct-coins">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Reason</label>
-            <input class="form-input" type="text" placeholder="e.g. Missed SLA target" id="deduct-reason">
-          </div>
+          <div class="form-group"><label class="form-label">Agent</label><select class="form-select" id="deduct-agent"></select></div>
+          <div class="form-group"><label class="form-label">Coins to Deduct</label><input class="form-input" type="number" placeholder="e.g. 50" id="deduct-coins"></div>
+          <div class="form-group"><label class="form-label">Reason</label><input class="form-input" type="text" placeholder="e.g. Missed SLA target" id="deduct-reason"></div>
           <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--neon-red),#8B0000);" onclick="deductCoins()">🔻 Deduct Coins</button>
         </div>
       </div>
     </div>
 
-    <!-- Tab: Live Feed Editor -->
+    <!-- Feed -->
     <div class="admin-sub-view" id="admin-feed">
       <div class="admin-card full-width">
-        <h3>📡 Live Feed Manager — Edit Everything</h3>
-        <div class="info-note">Edit message text, icon, and timestamp for any feed entry. Add new entries or delete existing ones. All changes appear instantly in the Dashboard live feed.</div>
-
-        <!-- Add new entry -->
+        <h3>📡 Live Feed Manager</h3>
+        <div class="info-note">All changes save instantly to Supabase and appear live on the Dashboard for everyone.</div>
         <div style="margin-bottom:14px;">
           <div style="font-family:'Orbitron',monospace;font-size:0.72rem;color:var(--purple-bright);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">➕ Add New Entry</div>
           <div class="feed-add-row">
-            <input class="feed-edit-icon-sel" type="text" id="new-feed-icon" placeholder="⚡" maxlength="4" title="Icon emoji">
-            <input class="feed-edit-msg" type="text" id="new-feed-msg" placeholder="Type message... use <strong>Name</strong> for bold highlight">
+            <input class="feed-edit-icon-sel" type="text" id="new-feed-icon" placeholder="⚡" maxlength="4">
+            <input class="feed-edit-msg" type="text" id="new-feed-msg" placeholder="Message… use &lt;strong&gt;Name&lt;/strong&gt; for bold">
             <input class="feed-edit-time" type="text" id="new-feed-time" placeholder="just now">
             <button class="btn btn-primary btn-sm" style="width:auto;" onclick="addFeedEntry()">Add</button>
           </div>
         </div>
-
-        <div style="font-family:'Orbitron',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Current Feed Entries</div>
+        <div style="font-family:'Orbitron',monospace;font-size:0.72rem;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Current Entries</div>
         <div class="feed-editor-list" id="feed-editor-list"></div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn btn-primary btn-sm" style="width:auto;" onclick="saveFeedChanges()">💾 Save All Changes to Dashboard</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearFeed()">🗑️ Clear All Entries</button>
-        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearFeed()">🗑️ Clear All Entries</button>
       </div>
     </div>
 
-    <!-- Tab: Stats Board -->
+    <!-- Stats -->
     <div class="admin-sub-view" id="admin-stats">
       <div class="admin-card full-width">
         <h3>📊 Dashboard Stats — Edit Live Numbers</h3>
-        <div class="info-note">Edit the headline numbers shown on the Dashboard stats cards. Changes update instantly.</div>
+        <div class="info-note">Edit the headline numbers shown on the Dashboard. Note: Chats Resolved and CSAT auto-update from Intercom data — you can also override manually.</div>
         <div class="admin-grid" style="margin-top:4px;">
           <div>
-            <div class="form-group">
-              <label class="form-label">🏆 Chats Resolved Today</label>
-              <input class="form-input" type="text" id="edit-stat-chats" placeholder="1,247">
-            </div>
-            <div class="form-group">
-              <label class="form-label">⚡ Avg Response Time</label>
-              <input class="form-input" type="text" id="edit-stat-time" placeholder="1m 42s">
-            </div>
+            <div class="form-group"><label class="form-label">🏆 Chats Resolved Today</label><input class="form-input" type="text" id="edit-stat-chats" placeholder="1,247"></div>
+            <div class="form-group"><label class="form-label">⚡ Avg Response Time</label><input class="form-input" type="text" id="edit-stat-time" placeholder="1m 42s"></div>
           </div>
           <div>
-            <div class="form-group">
-              <label class="form-label">⭐ CSAT Score</label>
-              <input class="form-input" type="text" id="edit-stat-csat" placeholder="4.8">
-            </div>
-            <div class="form-group">
-              <label class="form-label">🔥 Team Win Streak (days)</label>
-              <input class="form-input" type="text" id="edit-stat-streak" placeholder="7">
-            </div>
+            <div class="form-group"><label class="form-label">⭐ CSAT Score</label><input class="form-input" type="text" id="edit-stat-csat" placeholder="4.8"></div>
+            <div class="form-group"><label class="form-label">🔥 Team Win Streak (days)</label><input class="form-input" type="text" id="edit-stat-streak" placeholder="7"></div>
           </div>
         </div>
         <button class="btn btn-primary btn-sm" style="width:auto;" onclick="saveStats()">💾 Update Dashboard Stats</button>
+        <span class="save-indicator" id="stats-saved">✓ Saved</span>
       </div>
     </div>
 
-    <!-- Tab: Reward Store Editor -->
+    <!-- Reward Store -->
     <div class="admin-sub-view" id="admin-rewards">
       <div class="admin-card full-width">
         <h3>🛍️ Reward Store Manager</h3>
-        <div class="info-note">Edit reward names, descriptions and coin costs. Add new rewards or remove existing ones.</div>
+        <div class="info-note">Edit reward names, descriptions and coin costs. All changes save to Supabase.</div>
         <div id="reward-editor-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
         <div style="background:rgba(155,89,255,0.05);border:1px dashed rgba(155,89,255,0.2);border-radius:12px;padding:14px;margin-bottom:14px;">
           <div style="font-family:'Orbitron',monospace;font-size:0.7rem;color:var(--purple-bright);letter-spacing:2px;margin-bottom:10px;">➕ ADD NEW REWARD</div>
           <div style="display:grid;grid-template-columns:60px 1fr 1fr 120px;gap:8px;align-items:end;">
-            <div>
-              <label class="form-label">Icon</label>
-              <input class="form-input" type="text" id="new-reward-icon" placeholder="🎁" maxlength="4" style="text-align:center;">
-            </div>
-            <div>
-              <label class="form-label">Name</label>
-              <input class="form-input" type="text" id="new-reward-name" placeholder="Reward name">
-            </div>
-            <div>
-              <label class="form-label">Description</label>
-              <input class="form-input" type="text" id="new-reward-desc" placeholder="What the agent gets...">
-            </div>
-            <div>
-              <label class="form-label">Coin Cost</label>
-              <input class="form-input" type="number" id="new-reward-cost" placeholder="200">
-            </div>
+            <div><label class="form-label">Icon</label><input class="form-input" type="text" id="new-reward-icon" placeholder="🎁" maxlength="4" style="text-align:center;"></div>
+            <div><label class="form-label">Name</label><input class="form-input" type="text" id="new-reward-name" placeholder="Reward name"></div>
+            <div><label class="form-label">Description</label><input class="form-input" type="text" id="new-reward-desc" placeholder="What the agent gets…"></div>
+            <div><label class="form-label">Coin Cost</label><input class="form-input" type="number" id="new-reward-cost" placeholder="200"></div>
           </div>
           <button class="btn btn-primary btn-sm" style="width:auto;margin-top:10px;" onclick="addReward()">➕ Add Reward</button>
         </div>
-        <button class="btn btn-primary btn-sm" style="width:auto;" onclick="saveRewards()">💾 Save Changes to Store</button>
       </div>
     </div>
 
-  </div><!-- end admin view -->
-
+  </div>
 </div>
 
 <!-- CELEBRATION -->
@@ -1285,70 +545,259 @@
     <div class="confetti-pieces" id="confetti-container"></div>
     <div class="celebration-emoji" id="cel-emoji">🦏</div>
     <div class="celebration-title" id="cel-title">ACHIEVEMENT UNLOCKED!</div>
-    <div class="celebration-sub" id="cel-sub">Mihail completed a mission</div>
+    <div class="celebration-sub" id="cel-sub">Outstanding performance!</div>
     <div class="celebration-coins" id="cel-coins">+100 🦏</div>
     <button class="btn btn-primary" style="width:auto;padding:12px 36px;" onclick="closeCelebration()">Claim Reward</button>
   </div>
 </div>
 
 <script>
-// ===================== DATA =====================
-let agents = [
-  { name:'Wayne', emoji:'👑', role:'Senior Agent', chats:62, rt:'1:22', csat:4.95, coins:520, score:980 },
-  { name:'Stefan', emoji:'⚡', role:'Support Agent', chats:57, rt:'1:28', csat:4.85, coins:440, score:890 },
-  { name:'Mihail',  emoji:'🎯', role:'Support Agent', chats:48, rt:'1:38', csat:4.90, coins:50000, score:810 },
-  { name:'Stasi',  emoji:'💎', role:'VIP Support',   chats:44, rt:'1:45', csat:4.92, coins:310, score:775 },
-  { name:'Vesna',  emoji:'🔥', role:'Support Agent', chats:39, rt:'1:55', csat:4.75, coins:280, score:690 },
-  { name:'Dimitar',emoji:'🚀', role:'Senior Agent',  chats:35, rt:'2:05', csat:4.70, coins:240, score:610 },
-];
+// ═══════════════════════════════════════════════════════════
+// SUPABASE INIT
+// ═══════════════════════════════════════════════════════════
+const SUPA_URL  = 'https://bfobchqoheogfwqmkbcr.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmb2JjaHFvaGVvZ2Z3cW1rYmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MDAwMzAsImV4cCI6MjA5MjQ3NjAzMH0.Uup8-uynz_HNkCai3ZmlYTYw_DG_99CyRLzzdajAI4w';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-let competitions = [
-  { id:1, name:'Speed Demon', kpi:'Fastest Response Time', desc:'Who handles chats quickest? Every second counts.', leader:'Mihail', leaderScore:'1:22 avg', prize:'€50 voucher', timeLeft:'2h 15m', active:true },
-  { id:2, name:'Chat Champion', kpi:'Most Chats Resolved', desc:'Volume is king. Resolve the most player queries before shift end.', leader:'Stefan', leaderScore:'57 chats', prize:'500 🦏 + day off', timeLeft:'5h 42m', active:true },
-  { id:3, name:'CSAT King', kpi:'Highest CSAT Score', desc:'Quality over quantity. Keep players happy with 5-star service.', leader:'Stasi', leaderScore:'4.92 rating', prize:'Amazon €30', timeLeft:'Ended', active:false },
-  { id:4, name:'Weekend Blitz', kpi:'High-Rated Chats', desc:'Most 4★+ rated chats wins the jackpot prize this weekend.', leader:'Mihail', leaderScore:'41 high-rated', prize:'€100 bonus', timeLeft:'1d 8h', active:true },
-];
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let agents       = [];
+let competitions = [];
+let missions     = [];
+let battles      = [];
+let rewards      = [];
+let feedEntries  = [];
+let walletCoins  = 50000;
 
-let missions = [
-  { icon:'⚡', title:'Speed Run', desc:'Resolve 10 chats under 90s response time', progress:70, coins:80, done:false },
-  { icon:'⭐', title:'CSAT Star', desc:'Earn 5 consecutive 5-star ratings', progress:60, coins:120, done:false },
-  { icon:'💬', title:'Chat Blitz', desc:'Handle 50 chats in one shift', progress:96, coins:200, done:false },
-  { icon:'🛡️', title:'Escalation Shield', desc:'Zero escalations for 3 consecutive days', progress:33, coins:150, done:false },
-  { icon:'🌙', title:'Night Owl', desc:'Cover 5 late-shift hours with CSAT above 4.5', progress:80, coins:100, done:false },
-  { icon:'🎰', title:'VIP Handler', desc:'Successfully resolve 3 VIP player complaints', progress:66, coins:250, done:false },
-];
+// ═══════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════
+const SESSION_KEY = 'rhino_admin_session';
 
-let battles = [
-  { a:'Mihail', ae:'👑', ascore:62, b:'Stefan', be:'⚡', bscore:57, goal:'First to 70 chats', acoins:100, bcoins:100 },
-  { a:'Mihail',  ae:'🎯', ascore:48, b:'Stasi',  be:'💎', bscore:44, goal:'Most chats by 6PM', acoins:50, bcoins:50 },
-];
+function checkSession() {
+  const s = sessionStorage.getItem(SESSION_KEY);
+  if (s === 'authenticated') {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('main-app').style.display = 'block';
+    return true;
+  }
+  return false;
+}
 
-let rewards = [
-  { icon:'☕', name:'Coffee & Snacks', desc:'A team coffee round on the house.', cost:100 },
-  { icon:'🎟️', name:'Early Finish Friday', desc:'Leave 30 minutes early on any Friday this month.', cost:250 },
-  { icon:'🎮', name:'Gaming Session', desc:'1-hour gaming break in the team lounge during work hours.', cost:200 },
-  { icon:'🛍️', name:'€25 Amazon Voucher', desc:'Spend it on anything you like.', cost:400 },
-  { icon:'🍕', name:'Team Pizza Lunch', desc:'Pizza for the whole team, on the leaderboard winner.', cost:600 },
-  { icon:'🏖️', name:'Extra Day Off', desc:'An extra paid day off — use it whenever you want.', cost:1200 },
-];
+async function doLogin() {
+  const user = document.getElementById('login-username').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const statusEl = document.getElementById('login-status');
+  errEl.textContent = '';
+  statusEl.textContent = 'Verifying…';
 
-let alertMessages = [
-  { icon:'⚡', msg:'<strong>Mihail</strong> resolved a chat in <strong>0:48s</strong> — new personal best!', time:'just now' },
-  { icon:'🏆', msg:'<strong>Stefan</strong> hit <strong>57 chats</strong> today — leading Chat Champion!', time:'2m ago' },
-  { icon:'⭐', msg:'<strong>Stasi</strong> received a 5⭐ from VIP player', time:'4m ago' },
-  { icon:'🦏', msg:'<strong>Mihail</strong> earned 80 coins for completing Speed Run mission', time:'7m ago' },
-  { icon:'⚔️', msg:'<strong>Mihail</strong> challenged <strong>Vesna</strong> to a battle!', time:'12m ago' },
-  { icon:'🎯', msg:'Team CSAT is at <strong>4.8</strong> — above target for 7 days straight!', time:'18m ago' },
-  { icon:'🔥', msg:'<strong>Dimitar</strong> is on a <strong>5-chat streak</strong> with zero escalations', time:'22m ago' },
-];
+  try {
+    const { data, error } = await sb
+      .from('admin_users')
+      .select('username')
+      .eq('username', user)
+      .eq('password_hash', pass)
+      .single();
 
-// ===================== RENDER =====================
+    if (error || !data) {
+      errEl.textContent = '❌ Invalid username or password.';
+      statusEl.textContent = '';
+      return;
+    }
+    sessionStorage.setItem(SESSION_KEY, 'authenticated');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('main-app').style.display = 'block';
+    initApp();
+  } catch(e) {
+    errEl.textContent = '❌ Connection error. Check database is running.';
+    statusEl.textContent = '';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+// Test connection on page load
+window.addEventListener('load', async () => {
+  const statusEl = document.getElementById('login-status');
+  try {
+    await sb.from('admin_users').select('id').limit(1);
+    statusEl.textContent = '✓ Connected to Supabase';
+    statusEl.style.color = 'var(--neon-green)';
+  } catch(e) {
+    statusEl.textContent = '⚠ Cannot reach database';
+    statusEl.style.color = 'var(--neon-red)';
+  }
+
+  if (checkSession()) {
+    initApp();
+  }
+
+  // Allow Enter on username
+  document.getElementById('login-username').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('login-password').focus();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// INIT — load all data + subscribe to real-time
+// ═══════════════════════════════════════════════════════════
+async function initApp() {
+  setConnectionDot('loading');
+  try {
+    await Promise.all([
+      loadAgents(),
+      loadCompetitions(),
+      loadMissions(),
+      loadBattles(),
+      loadRewards(),
+      loadFeed(),
+      loadStats(),
+      loadWallet(),
+    ]);
+    setConnectionDot('connected');
+    subscribeRealtime();
+  } catch(e) {
+    console.error('Init error:', e);
+    setConnectionDot('error');
+  }
+}
+
+function setConnectionDot(state) {
+  const dot = document.getElementById('conn-dot');
+  dot.className = 'connection-dot' + (state === 'connected' ? ' connected' : state === 'error' ? ' error' : '');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA LOADERS
+// ═══════════════════════════════════════════════════════════
+async function loadAgents() {
+  const { data, error } = await sb.from('agents').select('*').order('score', { ascending: false });
+  if (error) throw error;
+  agents = data || [];
+  renderLeaderboard();
+  renderScorecard();
+  refreshAgentDropdowns();
+}
+
+async function loadCompetitions() {
+  const { data } = await sb.from('competitions').select('*').order('created_at', { ascending: false });
+  competitions = data || [];
+  renderCompetitions();
+}
+
+async function loadMissions() {
+  const { data } = await sb.from('missions').select('*').order('created_at', { ascending: false });
+  missions = data || [];
+  renderMissions();
+}
+
+async function loadBattles() {
+  const { data } = await sb.from('battles').select('*').order('created_at', { ascending: false });
+  battles = data || [];
+  renderBattles();
+}
+
+async function loadRewards() {
+  const { data } = await sb.from('rewards').select('*').where ? null : await sb.from('rewards').select('*').order('cost');
+  const { data: rd } = await sb.from('rewards').select('*').order('cost');
+  rewards = rd || [];
+  renderRewards();
+}
+
+async function loadFeed() {
+  const { data } = await sb.from('feed_entries').select('*').order('created_at', { ascending: false }).limit(20);
+  feedEntries = data || [];
+  renderAlerts();
+}
+
+async function loadStats() {
+  const { data } = await sb.from('dashboard_stats').select('*').eq('id', 1).single();
+  if (data) applyStats(data);
+}
+
+async function loadWallet() {
+  const { data } = await sb.from('wallet').select('*').eq('id', 1).single();
+  if (data) { walletCoins = data.coins; updateWallet(); }
+}
+
+function applyStats(data) {
+  setText('stat-chats',  data.chats_resolved);
+  setText('stat-time',   data.avg_response_time);
+  setText('stat-csat',   data.csat_score);
+  setText('stat-streak', data.team_win_streak);
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val ?? '—';
+}
+
+// ═══════════════════════════════════════════════════════════
+// REAL-TIME SUBSCRIPTIONS
+// ═══════════════════════════════════════════════════════════
+function subscribeRealtime() {
+  // Agents
+  sb.channel('agents-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => loadAgents())
+    .subscribe();
+
+  // Feed
+  sb.channel('feed-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_entries' }, () => loadFeed())
+    .subscribe();
+
+  // Stats
+  sb.channel('stats-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_stats' }, payload => {
+      if (payload.new) applyStats(payload.new);
+    })
+    .subscribe();
+
+  // Competitions
+  sb.channel('comp-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'competitions' }, () => loadCompetitions())
+    .subscribe();
+
+  // Missions
+  sb.channel('miss-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, () => loadMissions())
+    .subscribe();
+
+  // Battles
+  sb.channel('battles-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'battles' }, () => loadBattles())
+    .subscribe();
+
+  // Rewards
+  sb.channel('rewards-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, () => loadRewards())
+    .subscribe();
+
+  // Wallet
+  sb.channel('wallet-rt')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet' }, payload => {
+      if (payload.new) { walletCoins = payload.new.coins; updateWallet(); }
+    })
+    .subscribe();
+
+  setConnectionDot('connected');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDERS
+// ═══════════════════════════════════════════════════════════
 function renderLeaderboard() {
-  const sorted = [...agents].sort((a,b)=>b.score-a.score);
-  const list = document.getElementById('leaderboard-list');
+  const sorted = [...agents].sort((a,b) => b.score - a.score);
   const maxScore = sorted[0]?.score || 1;
-  list.innerHTML = sorted.map((a,i)=>{
-    const pct = (a.score/maxScore*100).toFixed(0);
+  const list = document.getElementById('leaderboard-list');
+  if (!list) return;
+  list.innerHTML = sorted.map((a,i) => {
+    const pct = (a.score / maxScore * 100).toFixed(0);
     const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
     const barColor = i===0?'var(--purple-bright)':i===1?'var(--magenta)':i===2?'var(--purple)':'var(--neon-cyan)';
     return `<div class="leaderboard-item ${rankClass}">
@@ -1368,24 +817,42 @@ function renderLeaderboard() {
   }).join('');
 }
 
+function renderScorecard() {
+  if (!agents.length) return;
+  const totalChats = agents.reduce((s,a) => s + a.chats, 0);
+  const bestRT     = [...agents].sort((a,b) => a.rt_seconds - b.rt_seconds).find(a => a.rt_seconds > 0);
+  const topCSAT    = Math.max(...agents.map(a => parseFloat(a.csat) || 0)).toFixed(2);
+  const totalCoins = agents.reduce((s,a) => s + a.coins, 0);
+  const topAgent   = [...agents].sort((a,b) => b.score - a.score)[0];
+
+  setText('sc-chats',  totalChats);
+  setText('sc-rt',     bestRT ? bestRT.rt : '—');
+  setText('sc-csat',   topCSAT);
+  setText('sc-agents', agents.length);
+  setText('sc-coins',  totalCoins.toLocaleString());
+  setText('sc-rank',   topAgent ? topAgent.name : '#1');
+}
+
 function renderCompetitions() {
   const grid = document.getElementById('competitions-grid');
-  grid.innerHTML = competitions.map(c=>`
+  if (!grid) return;
+  if (!competitions.length) { grid.innerHTML = '<div class="loading-overlay">No competitions yet. Create one in Admin!</div>'; return; }
+  grid.innerHTML = competitions.map(c => `
     <div class="comp-card">
       <div class="comp-header">
         <div class="comp-title">${c.name}</div>
         <div class="comp-badge ${c.active?'':'ended'}">${c.active?'🟢 Active':'Ended'}</div>
       </div>
-      <div class="comp-desc">${c.desc}</div>
+      <div class="comp-desc">${c.description||''}</div>
       <div class="comp-leader">
         <div class="crown">👑</div>
-        <div class="comp-leader-info">
+        <div>
           <div class="comp-leader-name">${c.leader}</div>
-          <div class="comp-leader-score">${c.leaderScore}</div>
+          <div class="comp-leader-score">${c.leader_score}</div>
         </div>
       </div>
       <div class="comp-footer">
-        <div class="comp-time">⏱️ ${c.timeLeft}</div>
+        <div class="comp-time">⏱️ ${c.time_left}</div>
         <div class="comp-prize">🏆 ${c.prize}</div>
       </div>
     </div>`).join('');
@@ -1393,42 +860,38 @@ function renderCompetitions() {
 
 function renderMissions() {
   const list = document.getElementById('missions-list');
-  list.innerHTML = missions.map((m,i)=>`
+  if (!list) return;
+  if (!missions.length) { list.innerHTML = '<div class="loading-overlay">No missions yet. Create one in Admin!</div>'; return; }
+  list.innerHTML = missions.map(m => `
     <div class="mission-item">
       <div class="mission-icon">${m.icon}</div>
       <div class="mission-info">
         <div class="mission-title">${m.title}</div>
-        <div class="mission-desc">${m.desc}</div>
+        <div class="mission-desc">${m.description||''}</div>
       </div>
       <div class="mission-progress-wrap">
         <div class="mission-pct">${m.progress}%</div>
         <div class="mission-bar-bg"><div class="mission-bar-fill" style="width:${Math.min(m.progress,100)}%"></div></div>
         <div class="mission-coins">+${m.coins} 🦏</div>
-        ${m.progress>=100&&!m.done?`<button class="btn btn-primary btn-sm" style="margin-top:5px;" onclick="completeMission(${i})">Claim!</button>`:''}
+        ${m.progress>=100&&!m.done?`<button class="btn btn-primary btn-sm" style="margin-top:5px;" onclick="completeMission('${m.id}',${m.coins})">Claim!</button>`:''}
       </div>
     </div>`).join('');
 }
 
 function renderBattles() {
   const grid = document.getElementById('battles-grid');
-  grid.innerHTML = battles.map(b=>{
-    const total = b.ascore+b.bscore||1;
-    const aPct = ((b.ascore/total)*100).toFixed(0);
-    const bPct = (100-aPct);
+  if (!grid) return;
+  if (!battles.length) { grid.innerHTML = '<div class="loading-overlay">No battles yet. Challenge someone!</div>'; return; }
+  grid.innerHTML = battles.map(b => {
+    const total = (b.score_a + b.score_b) || 1;
+    const aPct  = ((b.score_a / total) * 100).toFixed(0);
+    const bPct  = (100 - aPct);
     return `<div class="battle-card">
       <div class="battle-header">⚔️ HEAD-TO-HEAD BATTLE</div>
       <div class="battle-contestants">
-        <div class="contestant">
-          <div class="avatar" style="margin:0 auto 8px;">${b.ae}</div>
-          <div class="contestant-name">${b.a}</div>
-          <div class="contestant-score">${b.ascore}</div>
-        </div>
+        <div class="contestant"><div class="avatar" style="margin:0 auto 8px;">${b.emoji_a}</div><div class="contestant-name">${b.agent_a}</div><div class="contestant-score">${b.score_a}</div></div>
         <div style="font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--magenta);font-weight:900;">VS</div>
-        <div class="contestant">
-          <div class="avatar" style="margin:0 auto 8px;">${b.be}</div>
-          <div class="contestant-name">${b.b}</div>
-          <div class="contestant-score">${b.bscore}</div>
-        </div>
+        <div class="contestant"><div class="avatar" style="margin:0 auto 8px;">${b.emoji_b}</div><div class="contestant-name">${b.agent_b}</div><div class="contestant-score">${b.score_b}</div></div>
       </div>
       <div class="battle-goal">${b.goal}</div>
       <div class="battle-bar-wrap">
@@ -1437,7 +900,7 @@ function renderBattles() {
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:0.73rem;color:var(--text-dim);">
         <span>${aPct}%</span>
-        <span style="color:var(--purple-bright);">🦏${b.acoins+b.bcoins} stake</span>
+        <span style="color:var(--purple-bright);">🦏${b.coins_a+b.coins_b} stake</span>
         <span>${bPct}%</span>
       </div>
     </div>`;
@@ -1446,168 +909,372 @@ function renderBattles() {
 
 function renderRewards() {
   const grid = document.getElementById('rewards-grid');
-  grid.innerHTML = rewards.map(r=>`
-    <div class="reward-card" onclick="claimReward('${r.name}',${r.cost})">
+  if (!grid) return;
+  grid.innerHTML = rewards.map(r => `
+    <div class="reward-card" onclick="claimReward('${r.id}','${r.name.replace(/'/g,"\\'")}',${r.cost})">
       <div class="reward-icon">${r.icon}</div>
       <div class="reward-name">${r.name}</div>
-      <div class="reward-desc">${r.desc}</div>
+      <div class="reward-desc">${r.description||''}</div>
       <div class="reward-cost">🦏 ${r.cost} coins</div>
     </div>`).join('');
 }
 
 function renderAlerts() {
   const list = document.getElementById('alerts-feed-list');
-  if(!list) return;
-  list.innerHTML = alertMessages.map(a=>`
+  if (!list) return;
+  if (!feedEntries.length) { list.innerHTML = '<div style="color:var(--text-dim);font-size:0.85rem;padding:12px 0;">No feed entries yet.</div>'; return; }
+  list.innerHTML = feedEntries.map(a => `
     <div class="alert-item">
       <div class="alert-icon">${a.icon}</div>
-      <div class="alert-msg">${a.msg}</div>
-      <div class="alert-time">${a.time}</div>
+      <div class="alert-msg">${a.message}</div>
+      <div class="alert-time">${a.time_label}</div>
     </div>`).join('');
 }
 
-// ===================== ADMIN RENDERS =====================
+// ═══════════════════════════════════════════════════════════
+// ADMIN RENDERS
+// ═══════════════════════════════════════════════════════════
 function renderAdminCompList() {
   const el = document.getElementById('admin-comp-list');
-  if(!el) return;
-  el.innerHTML = competitions.map((c,i)=>`
-    <div style="background:rgba(155,89,255,0.05);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+  if (!el) return;
+  el.innerHTML = competitions.map(c => `
+    <div style="background:rgba(155,89,255,0.05);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;">
       <div style="flex:1;">
         <div style="font-weight:700;font-size:0.9rem;">${c.name}</div>
-        <div style="font-size:0.75rem;color:var(--text-dim);">${c.kpi} · ${c.timeLeft} · Prize: ${c.prize}</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);">${c.kpi} · ${c.time_left} · ${c.prize}</div>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="toggleComp(${i})">${c.active?'⏸ End':'▶ Activate'}</button>
-      <button class="feed-del-btn" onclick="deleteComp(${i})">✕</button>
-    </div>`).join('');
+      <button class="btn btn-ghost btn-sm" onclick="toggleComp('${c.id}',${c.active})">${c.active?'⏸ End':'▶ Activate'}</button>
+      <button class="feed-del-btn" onclick="deleteComp('${c.id}')">✕</button>
+    </div>`).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;">No competitions yet.</div>';
 }
 
 function renderAdminMissionList() {
   const el = document.getElementById('admin-mission-list');
-  if(!el) return;
-  el.innerHTML = missions.map((m,i)=>`
+  if (!el) return;
+  el.innerHTML = missions.map(m => `
     <div style="background:rgba(155,89,255,0.05);border:1px solid var(--border);border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:8px;">
       <span style="font-size:1.1rem;">${m.icon}</span>
-      <div style="flex:1;">
-        <div style="font-weight:700;font-size:0.85rem;">${m.title}</div>
-        <div style="font-size:0.72rem;color:var(--text-dim);">${m.progress}% · +${m.coins} coins</div>
-      </div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:0.85rem;">${m.title}</div><div style="font-size:0.72rem;color:var(--text-dim);">${m.progress}% · +${m.coins} coins</div></div>
       <input type="number" value="${m.progress}" min="0" max="100"
         style="width:56px;background:rgba(155,89,255,0.08);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.85rem;outline:none;"
-        onchange="missions[${i}].progress=parseInt(this.value)||0; renderMissions();" title="Progress %">
-      <button class="feed-del-btn" onclick="deleteMission(${i})">✕</button>
+        onchange="updateMissionProgress('${m.id}',this.value)">
+      <button class="feed-del-btn" onclick="deleteMission('${m.id}')">✕</button>
     </div>`).join('');
 }
 
 function renderAgentTable() {
   const table = document.getElementById('agent-table');
-  if(!table) return;
+  if (!table) return;
   table.innerHTML = `<thead><tr>
-    <th>Emoji</th><th>Name</th><th>Role</th><th>Chats</th><th>Avg RT</th><th>CSAT</th><th>Score</th><th>Coins</th><th></th>
-  </tr></thead><tbody>${agents.map((a,i)=>`
+    <th>Emoji</th><th>Name</th><th>Role</th><th>Email</th><th>Chats</th><th>Avg RT</th><th>CSAT</th><th>Score</th><th>Coins</th><th></th>
+  </tr></thead><tbody>${agents.map(a => `
     <tr>
-      <td class="editable-cell"><input value="${a.emoji}" onchange="agents[${i}].emoji=this.value;renderLeaderboard();" style="width:46px;text-align:center;"></td>
-      <td class="editable-cell"><input value="${a.name}" onchange="agents[${i}].name=this.value;renderLeaderboard();refreshAgentDropdowns();"></td>
+      <td class="editable-cell"><input value="${a.emoji}" onblur="updateAgent('${a.id}','emoji',this.value)" style="width:46px;text-align:center;"></td>
+      <td class="editable-cell"><input value="${a.name}" onblur="updateAgent('${a.id}','name',this.value)"></td>
       <td class="editable-cell">
-        <select style="background:rgba(155,89,255,0.06);border:1px solid transparent;border-radius:5px;padding:3px 7px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.88rem;outline:none;" onchange="agents[${i}].role=this.value;renderLeaderboard();">
+        <select style="background:rgba(155,89,255,0.06);border:1px solid transparent;border-radius:5px;padding:3px 7px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.88rem;outline:none;" onchange="updateAgent('${a.id}','role',this.value)">
           ${['Support Agent','Senior Agent','Team Lead','VIP Support'].map(r=>`<option ${a.role===r?'selected':''}>${r}</option>`).join('')}
         </select>
       </td>
-      <td class="editable-cell"><input type="number" value="${a.chats}" onchange="agents[${i}].chats=parseInt(this.value)||0;renderLeaderboard();"></td>
-      <td class="editable-cell"><input value="${a.rt}" onchange="agents[${i}].rt=this.value;renderLeaderboard();"></td>
-      <td class="editable-cell"><input type="number" step="0.01" value="${a.csat}" onchange="agents[${i}].csat=parseFloat(this.value)||0;renderLeaderboard();"></td>
-      <td class="editable-cell"><input type="number" value="${a.score}" onchange="agents[${i}].score=parseInt(this.value)||0;renderLeaderboard();"></td>
-      <td class="editable-cell"><input type="number" value="${a.coins}" onchange="agents[${i}].coins=parseInt(this.value)||0;renderLeaderboard();"></td>
-      <td><button class="feed-del-btn" onclick="deleteAgent(${i})">✕</button></td>
+      <td class="editable-cell"><input value="${a.email||''}" onblur="updateAgent('${a.id}','email',this.value)" style="width:140px;"></td>
+      <td class="editable-cell"><input type="number" value="${a.chats}" onblur="updateAgent('${a.id}','chats',parseInt(this.value)||0)" style="width:60px;"></td>
+      <td style="color:var(--neon-cyan);font-family:'Orbitron',monospace;font-size:0.8rem;">${a.rt}</td>
+      <td style="color:var(--purple-bright);">${parseFloat(a.csat).toFixed(2)}</td>
+      <td class="editable-cell"><input type="number" value="${a.score}" onblur="updateAgent('${a.id}','score',parseInt(this.value)||0)" style="width:70px;"></td>
+      <td class="editable-cell"><input type="number" value="${a.coins}" onblur="updateAgent('${a.id}','coins',parseInt(this.value)||0)" style="width:80px;"></td>
+      <td><button class="feed-del-btn" onclick="deleteAgent('${a.id}','${a.name}')">✕</button></td>
     </tr>`).join('')}</tbody>`;
 }
 
 function renderFeedEditor() {
   const list = document.getElementById('feed-editor-list');
-  if(!list) return;
-  list.innerHTML = alertMessages.map((a,i)=>`
+  if (!list) return;
+  list.innerHTML = feedEntries.map(a => `
     <div class="feed-edit-row">
-      <input class="feed-edit-icon-sel" type="text" value="${a.icon}" id="feed-icon-${i}" maxlength="4" title="Icon emoji">
-      <input class="feed-edit-msg" type="text" value="${a.msg.replace(/<[^>]*>/g,'')}" id="feed-msg-${i}" placeholder="Message text">
-      <input class="feed-edit-time" type="text" value="${a.time}" id="feed-time-${i}" placeholder="Timestamp">
-      <button class="feed-del-btn" onclick="deleteFeedEntry(${i})">✕</button>
+      <input class="feed-edit-icon-sel" type="text" value="${a.icon}" onblur="updateFeedEntry('${a.id}','icon',this.value)" maxlength="4">
+      <input class="feed-edit-msg" type="text" value="${a.message.replace(/"/g,'&quot;')}" onblur="updateFeedEntry('${a.id}','message',this.value)">
+      <input class="feed-edit-time" type="text" value="${a.time_label}" onblur="updateFeedEntry('${a.id}','time_label',this.value)">
+      <button class="feed-del-btn" onclick="deleteFeedEntry('${a.id}')">✕</button>
     </div>`).join('');
 }
 
 function renderRewardEditor() {
   const el = document.getElementById('reward-editor-list');
-  if(!el) return;
-  el.innerHTML = rewards.map((r,i)=>`
+  if (!el) return;
+  el.innerHTML = rewards.map(r => `
     <div style="display:grid;grid-template-columns:50px 1fr 2fr 110px auto;gap:8px;align-items:center;background:rgba(155,89,255,0.04);border:1px solid var(--border);border-radius:10px;padding:8px 12px;">
-      <input type="text" value="${r.icon}" maxlength="4"
-        style="background:rgba(155,89,255,0.1);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:1rem;text-align:center;outline:none;width:100%;"
-        onchange="rewards[${i}].icon=this.value;">
-      <input type="text" value="${r.name}"
-        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.87rem;outline:none;width:100%;"
-        onchange="rewards[${i}].name=this.value;">
-      <input type="text" value="${r.desc}"
-        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.87rem;outline:none;width:100%;"
-        onchange="rewards[${i}].desc=this.value;">
-      <input type="number" value="${r.cost}"
-        style="background:rgba(155,89,255,0.08);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--purple-bright);font-family:'Orbitron',monospace;font-size:0.82rem;outline:none;width:100%;"
-        onchange="rewards[${i}].cost=parseInt(this.value)||0;">
-      <button class="feed-del-btn" onclick="deleteReward(${i})">✕</button>
+      <input type="text" value="${r.icon}" maxlength="4" onblur="updateReward('${r.id}','icon',this.value)"
+        style="background:rgba(155,89,255,0.1);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:1rem;text-align:center;outline:none;width:100%;">
+      <input type="text" value="${r.name}" onblur="updateReward('${r.id}','name',this.value)"
+        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.87rem;outline:none;width:100%;">
+      <input type="text" value="${r.description||''}" onblur="updateReward('${r.id}','description',this.value)"
+        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 9px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.87rem;outline:none;width:100%;">
+      <input type="number" value="${r.cost}" onblur="updateReward('${r.id}','cost',parseInt(this.value)||0)"
+        style="background:rgba(155,89,255,0.08);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--purple-bright);font-family:'Orbitron',monospace;font-size:0.82rem;outline:none;width:100%;">
+      <button class="feed-del-btn" onclick="deleteReward('${r.id}')">✕</button>
     </div>`).join('');
 }
 
 function refreshAgentDropdowns() {
-  const names = agents.map(a=>a.name);
-  ['award-agent','deduct-agent'].forEach(id=>{
+  ['award-agent','deduct-agent'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.innerHTML = names.map(n=>`<option>${n}</option>`).join('');
+    if (el) el.innerHTML = agents.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
   });
 }
 
-// ===================== ACTIONS =====================
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
 function showView(v) {
-  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
-  document.getElementById('view-'+v).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(el=>{
-    if(el.textContent.toLowerCase().trim().startsWith(v.substring(0,4))) el.classList.add('active');
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(el => {
+    if (el.textContent.toLowerCase().trim().startsWith(v.substring(0,4))) el.classList.add('active');
   });
-  if(v==='admin') {
+  if (v === 'admin') {
     renderAdminCompList();
     renderAdminMissionList();
     renderAgentTable();
     renderFeedEditor();
     renderRewardEditor();
     refreshAgentDropdowns();
-    // Pre-fill stats
-    document.getElementById('edit-stat-chats').value = document.getElementById('stat-chats').textContent;
-    document.getElementById('edit-stat-time').value = document.getElementById('stat-time').textContent;
-    document.getElementById('edit-stat-csat').value = document.getElementById('stat-csat').textContent;
-    document.getElementById('edit-stat-streak').value = document.getElementById('stat-streak').textContent;
+    const el = document.getElementById('edit-stat-chats');
+    if (el) {
+      el.value = document.getElementById('stat-chats').textContent;
+      document.getElementById('edit-stat-time').value   = document.getElementById('stat-time').textContent;
+      document.getElementById('edit-stat-csat').value   = document.getElementById('stat-csat').textContent;
+      document.getElementById('edit-stat-streak').value = document.getElementById('stat-streak').textContent;
+    }
   }
 }
 
-function showAdminTab(tab) {
-  document.querySelectorAll('.admin-sub-view').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.tab-pill').forEach(el=>el.classList.remove('active'));
-  document.getElementById('admin-'+tab).classList.add('active');
-  event.target.classList.add('active');
-  if(tab==='agents') renderAgentTable();
-  if(tab==='feed') renderFeedEditor();
-  if(tab==='rewards') renderRewardEditor();
-  if(tab==='missions') renderAdminMissionList();
-  if(tab==='competition') renderAdminCompList();
+function showAdminTab(tab, el) {
+  document.querySelectorAll('.admin-sub-view').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-pill').forEach(e => e.classList.remove('active'));
+  document.getElementById('admin-' + tab).classList.add('active');
+  if (el) el.classList.add('active');
+  if (tab === 'agents')      renderAgentTable();
+  if (tab === 'feed')        renderFeedEditor();
+  if (tab === 'rewards')     renderRewardEditor();
+  if (tab === 'missions')    renderAdminMissionList();
+  if (tab === 'competition') renderAdminCompList();
 }
 
-let walletCoins = 50000;
+// ═══════════════════════════════════════════════════════════
+// SUPABASE MUTATIONS
+// ═══════════════════════════════════════════════════════════
+async function updateAgent(id, field, value) {
+  await sb.from('agents').update({ [field]: value }).eq('id', id);
+}
 
+async function updateMissionProgress(id, val) {
+  await sb.from('missions').update({ progress: parseInt(val)||0 }).eq('id', id);
+}
+
+async function updateFeedEntry(id, field, value) {
+  await sb.from('feed_entries').update({ [field]: value }).eq('id', id);
+}
+
+async function updateReward(id, field, value) {
+  await sb.from('rewards').update({ [field]: value }).eq('id', id);
+}
+
+// ═══════════════════════════════════════════════════════════
+// WALLET
+// ═══════════════════════════════════════════════════════════
+function updateWallet() {
+  setText('wallet-coins',  walletCoins);
+  setText('wallet-coins2', walletCoins);
+}
+
+async function saveWallet(coins) {
+  walletCoins = coins;
+  updateWallet();
+  await sb.from('wallet').update({ coins }).eq('id', 1);
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════
+async function launchCompetition() {
+  const name     = document.getElementById('new-comp-name').value.trim();
+  const kpi      = document.getElementById('new-comp-kpi').value;
+  const desc     = document.getElementById('new-comp-desc').value.trim() || `Track ${kpi}. May the best agent win!`;
+  const duration = document.getElementById('new-comp-duration').value;
+  const prize    = document.getElementById('new-comp-prize').value.trim() || 'TBD';
+  if (!name) { alert('Enter a competition name'); return; }
+  await sb.from('competitions').insert({ name, kpi, description: desc, leader:'TBD', leader_score:'—', prize, time_left: duration, active: true });
+  document.getElementById('new-comp-name').value = '';
+  document.getElementById('new-comp-desc').value = '';
+  document.getElementById('new-comp-prize').value = '';
+  showView('competitions');
+}
+
+async function toggleComp(id, current) {
+  await sb.from('competitions').update({ active: !current }).eq('id', id);
+}
+
+async function deleteComp(id) {
+  if (confirm('Delete this competition?')) await sb.from('competitions').delete().eq('id', id);
+}
+
+async function createMission() {
+  const icon     = document.getElementById('new-miss-icon').value.trim() || '🎯';
+  const title    = document.getElementById('new-miss-title').value.trim();
+  const desc     = document.getElementById('new-miss-desc').value.trim();
+  const progress = Math.min(100, parseInt(document.getElementById('new-miss-progress').value)||0);
+  const coins    = parseInt(document.getElementById('new-miss-coins').value)||50;
+  if (!title) { alert('Enter a mission title'); return; }
+  await sb.from('missions').insert({ icon, title, description: desc, progress, coins, done: false });
+  ['new-miss-icon','new-miss-title','new-miss-desc','new-miss-progress','new-miss-coins'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function deleteMission(id) {
+  await sb.from('missions').delete().eq('id', id);
+}
+
+async function completeMission(id, coins) {
+  await sb.from('missions').update({ done: true, progress: 100 }).eq('id', id);
+  triggerCelebration('Mission Complete!', 'Challenge conquered!', coins);
+  await saveWallet(walletCoins + coins);
+}
+
+async function awardCoins() {
+  const agentId  = document.getElementById('award-agent').value;
+  const coins    = parseInt(document.getElementById('award-coins').value)||0;
+  const reason   = document.getElementById('award-reason').value.trim() || 'Outstanding performance';
+  if (!coins) { alert('Enter coin amount'); return; }
+  const agent = agents.find(a => a.id === agentId);
+  if (!agent) return;
+  await sb.from('agents').update({ coins: agent.coins + coins }).eq('id', agentId);
+  await sb.from('feed_entries').insert({ icon:'🦏', message:`<strong>${agent.name}</strong> awarded <strong>${coins} coins</strong> — ${reason}`, time_label:'just now' });
+  triggerCelebration(agent.name, reason, 0);
+  document.getElementById('cel-coins').textContent = `+${coins} 🦏 awarded!`;
+  document.getElementById('award-coins').value = '';
+  document.getElementById('award-reason').value = '';
+}
+
+async function deductCoins() {
+  const agentId = document.getElementById('deduct-agent').value;
+  const coins   = parseInt(document.getElementById('deduct-coins').value)||0;
+  const reason  = document.getElementById('deduct-reason').value.trim() || 'Performance issue';
+  if (!coins) { alert('Enter coin amount'); return; }
+  const agent = agents.find(a => a.id === agentId);
+  if (!agent) return;
+  const newCoins = Math.max(0, agent.coins - coins);
+  await sb.from('agents').update({ coins: newCoins }).eq('id', agentId);
+  await sb.from('feed_entries').insert({ icon:'🔻', message:`<strong>${agent.name}</strong> had <strong>${coins} coins</strong> deducted — ${reason}`, time_label:'just now' });
+  document.getElementById('deduct-coins').value = '';
+  document.getElementById('deduct-reason').value = '';
+  alert(`🔻 ${coins} coins deducted from ${agent.name}.`);
+}
+
+async function addAgent() {
+  const name   = document.getElementById('new-agent-name').value.trim();
+  const role   = document.getElementById('new-agent-role').value;
+  const email  = document.getElementById('new-agent-email').value.trim();
+  const emoji  = document.getElementById('new-agent-emoji').value.trim() || '😊';
+  const coins  = parseInt(document.getElementById('new-agent-coins').value)||100;
+  if (!name) { alert('Enter agent name'); return; }
+  await sb.from('agents').insert({ name, emoji, role, email: email || null, chats:0, rt:'—', rt_seconds:0, csat:0, csat_count:0, csat_total:0, coins, score:0 });
+  ['new-agent-name','new-agent-email','new-agent-emoji'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function deleteAgent(id, name) {
+  if (confirm(`Remove ${name} from the team?`)) await sb.from('agents').delete().eq('id', id);
+}
+
+async function addFeedEntry() {
+  const icon    = document.getElementById('new-feed-icon').value.trim() || '📢';
+  const message = document.getElementById('new-feed-msg').value.trim();
+  const time    = document.getElementById('new-feed-time').value.trim() || 'just now';
+  if (!message) { alert('Enter a message'); return; }
+  await sb.from('feed_entries').insert({ icon, message, time_label: time });
+  ['new-feed-icon','new-feed-msg','new-feed-time'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function deleteFeedEntry(id) {
+  await sb.from('feed_entries').delete().eq('id', id);
+}
+
+async function clearFeed() {
+  if (confirm('Clear all feed entries?')) await sb.from('feed_entries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+}
+
+async function saveStats() {
+  const chats  = document.getElementById('edit-stat-chats').value.trim();
+  const time   = document.getElementById('edit-stat-time').value.trim();
+  const csat   = document.getElementById('edit-stat-csat').value.trim();
+  const streak = document.getElementById('edit-stat-streak').value.trim();
+  await sb.from('dashboard_stats').update({
+    chats_resolved:    chats,
+    avg_response_time: time,
+    csat_score:        csat,
+    team_win_streak:   streak,
+    updated_at:        new Date().toISOString(),
+  }).eq('id', 1);
+  const ind = document.getElementById('stats-saved');
+  ind.classList.add('show');
+  setTimeout(() => ind.classList.remove('show'), 2000);
+}
+
+async function addReward() {
+  const icon = document.getElementById('new-reward-icon').value.trim() || '🎁';
+  const name = document.getElementById('new-reward-name').value.trim();
+  const desc = document.getElementById('new-reward-desc').value.trim();
+  const cost = parseInt(document.getElementById('new-reward-cost').value)||100;
+  if (!name) { alert('Enter reward name'); return; }
+  await sb.from('rewards').insert({ icon, name, description: desc, cost });
+  ['new-reward-icon','new-reward-name','new-reward-desc','new-reward-cost'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function deleteReward(id) {
+  await sb.from('rewards').delete().eq('id', id);
+}
+
+async function startBattle() {
+  const opponents = agents.filter(a => a.name !== 'Mihail');
+  if (!opponents.length) { alert('No opponents available!'); return; }
+  if (walletCoins < 50) { alert('Need 50 coins to start a battle!'); return; }
+  const opp = opponents[Math.floor(Math.random() * opponents.length)];
+  await saveWallet(walletCoins - 50);
+  await sb.from('battles').insert({
+    agent_a: 'You', emoji_a: '🎯', score_a: 0,
+    agent_b: opp.name, emoji_b: opp.emoji, score_b: 0,
+    goal: 'First to 10 chats wins', coins_a: 50, coins_b: 50, active: true,
+  });
+  showView('battles');
+  alert(`⚔️ Battle started vs ${opp.name}! First to 10 chats wins 100 coins.`);
+}
+
+async function claimReward(id, name, cost) {
+  if (walletCoins >= cost) {
+    await saveWallet(walletCoins - cost);
+    spawnConfetti();
+    document.getElementById('cel-emoji').textContent   = '🛍️';
+    document.getElementById('cel-title').textContent   = 'REWARD CLAIMED!';
+    document.getElementById('cel-sub').textContent     = `You redeemed: "${name}"`;
+    document.getElementById('cel-coins').textContent   = `-${cost} 🦏 spent`;
+    document.getElementById('celebration').classList.add('show');
+    await sb.from('feed_entries').insert({ icon:'🛍️', message:`A reward was redeemed: <strong>${name}</strong>`, time_label:'just now' });
+  } else {
+    alert(`Not enough coins! Need ${cost}, have ${walletCoins}. Keep competing!`);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CELEBRATION
+// ═══════════════════════════════════════════════════════════
 function triggerCelebration(name, reason, coins) {
   const emojis = ['🦏','🏆','🎰','🎉','💎','⭐','👑'];
   document.getElementById('cel-emoji').textContent = emojis[Math.floor(Math.random()*emojis.length)];
   document.getElementById('cel-title').textContent = 'ACHIEVEMENT UNLOCKED!';
-  document.getElementById('cel-sub').textContent = `${name} — ${reason}`;
-  document.getElementById('cel-coins').textContent = coins > 0 ? `+${coins} 🦏` : `Recognition earned!`;
+  document.getElementById('cel-sub').textContent   = `${name} — ${reason}`;
+  document.getElementById('cel-coins').textContent = coins > 0 ? `+${coins} 🦏` : 'Recognition earned!';
   spawnConfetti();
   document.getElementById('celebration').classList.add('show');
-  if(coins>0) { walletCoins += coins; updateWallet(); }
+  if (coins > 0) saveWallet(walletCoins + coins);
 }
 
 function closeCelebration() { document.getElementById('celebration').classList.remove('show'); }
@@ -1616,247 +1283,13 @@ function spawnConfetti() {
   const c = document.getElementById('confetti-container');
   c.innerHTML = '';
   const colors = ['#9B59FF','#C084FC','#E040FB','#00FF88','#22D3EE','#fff'];
-  for(let i=0;i<35;i++) {
+  for (let i = 0; i < 35; i++) {
     const p = document.createElement('div');
     p.className = 'confetti-piece';
     p.style.cssText = `left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${0.7+Math.random()*1.2}s;animation-delay:${Math.random()*0.4}s;width:${4+Math.random()*9}px;height:${4+Math.random()*9}px;border-radius:${Math.random()>0.5?'50%':'2px'};`;
     c.appendChild(p);
   }
 }
-
-function updateWallet() {
-  document.getElementById('wallet-coins').textContent = walletCoins;
-  document.getElementById('wallet-coins2').textContent = walletCoins;
-}
-
-function completeMission(i) {
-  missions[i].done = true;
-  triggerCelebration('Mihail', missions[i].title + ' mission complete', missions[i].coins);
-  renderMissions();
-}
-
-function claimReward(name, cost) {
-  if(walletCoins >= cost) {
-    walletCoins -= cost;
-    updateWallet();
-    spawnConfetti();
-    document.getElementById('cel-emoji').textContent = '🛍️';
-    document.getElementById('cel-title').textContent = 'REWARD CLAIMED!';
-    document.getElementById('cel-sub').textContent = `You redeemed: "${name}"`;
-    document.getElementById('cel-coins').textContent = `-${cost} 🦏 spent`;
-    document.getElementById('celebration').classList.add('show');
-  } else {
-    alert(`Not enough coins! You need ${cost} but have ${walletCoins}. Keep competing!`);
-  }
-}
-
-function launchCompetition() {
-  const name = document.getElementById('new-comp-name').value.trim();
-  const kpi = document.getElementById('new-comp-kpi').value;
-  const desc = document.getElementById('new-comp-desc').value.trim() || `Track ${kpi}. May the best agent win!`;
-  const duration = document.getElementById('new-comp-duration').value;
-  const prize = document.getElementById('new-comp-prize').value.trim() || 'TBD';
-  if(!name) { alert('Enter a competition name'); return; }
-  competitions.unshift({ id:Date.now(), name, kpi, desc, leader:'TBD', leaderScore:'—', prize, timeLeft:duration, active:true });
-  renderCompetitions();
-  renderAdminCompList();
-  showView('competitions');
-  document.getElementById('new-comp-name').value='';
-  document.getElementById('new-comp-desc').value='';
-  document.getElementById('new-comp-prize').value='';
-}
-
-function toggleComp(i) { competitions[i].active=!competitions[i].active; renderCompetitions(); renderAdminCompList(); }
-function deleteComp(i) { if(confirm('Delete this competition?')) { competitions.splice(i,1); renderCompetitions(); renderAdminCompList(); } }
-
-function createMission() {
-  const icon = document.getElementById('new-miss-icon').value.trim() || '🎯';
-  const title = document.getElementById('new-miss-title').value.trim();
-  const desc = document.getElementById('new-miss-desc').value.trim();
-  const progress = Math.min(100, parseInt(document.getElementById('new-miss-progress').value)||0);
-  const coins = parseInt(document.getElementById('new-miss-coins').value)||50;
-  if(!title) { alert('Enter a mission title'); return; }
-  missions.unshift({ icon, title, desc, progress, coins, done:false });
-  renderMissions();
-  renderAdminMissionList();
-  document.getElementById('new-miss-icon').value='';
-  document.getElementById('new-miss-title').value='';
-  document.getElementById('new-miss-desc').value='';
-  document.getElementById('new-miss-progress').value='';
-  document.getElementById('new-miss-coins').value='';
-}
-
-function deleteMission(i) { missions.splice(i,1); renderMissions(); renderAdminMissionList(); }
-
-function awardCoins() {
-  const agentName = document.getElementById('award-agent').value;
-  const coins = parseInt(document.getElementById('award-coins').value)||0;
-  const reason = document.getElementById('award-reason').value.trim() || 'Outstanding performance';
-  if(!coins) { alert('Enter coin amount'); return; }
-  const agent = agents.find(a=>a.name===agentName);
-  if(agent) agent.coins += coins;
-  renderLeaderboard();
-  renderAgentTable();
-  triggerCelebration(agentName, reason, 0);
-  document.getElementById('cel-coins').textContent = `+${coins} 🦏 awarded!`;
-  alertMessages.unshift({ icon:'🦏', msg:`<strong>${agentName}</strong> awarded <strong>${coins} coins</strong> — ${reason}`, time:'just now' });
-  renderAlerts();
-  renderFeedEditor();
-  document.getElementById('award-coins').value='';
-  document.getElementById('award-reason').value='';
-}
-
-function deductCoins() {
-  const agentName = document.getElementById('deduct-agent').value;
-  const coins = parseInt(document.getElementById('deduct-coins').value)||0;
-  const reason = document.getElementById('deduct-reason').value.trim() || 'Performance issue';
-  if(!coins) { alert('Enter coin amount'); return; }
-  const agent = agents.find(a=>a.name===agentName);
-  if(agent) agent.coins = Math.max(0, agent.coins - coins);
-  renderLeaderboard();
-  renderAgentTable();
-  alertMessages.unshift({ icon:'🔻', msg:`<strong>${agentName}</strong> had <strong>${coins} coins</strong> deducted — ${reason}`, time:'just now' });
-  renderAlerts();
-  renderFeedEditor();
-  document.getElementById('deduct-coins').value='';
-  document.getElementById('deduct-reason').value='';
-  alert(`🔻 ${coins} coins deducted from ${agentName}.`);
-}
-
-function addAgent() {
-  const name = document.getElementById('new-agent-name').value.trim();
-  const role = document.getElementById('new-agent-role').value;
-  const emoji = document.getElementById('new-agent-emoji').value.trim() || '😊';
-  const coins = parseInt(document.getElementById('new-agent-coins').value)||100;
-  if(!name) { alert('Enter agent name'); return; }
-  agents.push({ name, emoji, role, chats:0, rt:'—', csat:0, coins, score:0 });
-  renderLeaderboard();
-  renderAgentTable();
-  refreshAgentDropdowns();
-  document.getElementById('new-agent-name').value='';
-  document.getElementById('new-agent-emoji').value='';
-  alert(`✅ ${name} added to the team!`);
-}
-
-function deleteAgent(i) {
-  if(confirm(`Remove ${agents[i].name} from the team?`)) {
-    agents.splice(i,1); renderLeaderboard(); renderAgentTable(); refreshAgentDropdowns();
-  }
-}
-
-// Feed editor actions
-function addFeedEntry() {
-  const icon = document.getElementById('new-feed-icon').value.trim() || '📢';
-  const msg = document.getElementById('new-feed-msg').value.trim();
-  const time = document.getElementById('new-feed-time').value.trim() || 'just now';
-  if(!msg) { alert('Enter a message'); return; }
-  alertMessages.unshift({ icon, msg, time });
-  renderAlerts();
-  renderFeedEditor();
-  document.getElementById('new-feed-icon').value='';
-  document.getElementById('new-feed-msg').value='';
-  document.getElementById('new-feed-time').value='';
-}
-
-function deleteFeedEntry(i) {
-  alertMessages.splice(i,1);
-  renderAlerts();
-  renderFeedEditor();
-}
-
-function saveFeedChanges() {
-  alertMessages.forEach((a,i)=>{
-    const iconEl = document.getElementById(`feed-icon-${i}`);
-    const msgEl = document.getElementById(`feed-msg-${i}`);
-    const timeEl = document.getElementById(`feed-time-${i}`);
-    if(iconEl) a.icon = iconEl.value.trim() || a.icon;
-    if(msgEl) a.msg = msgEl.value.trim() || a.msg;
-    if(timeEl) a.time = timeEl.value.trim() || a.time;
-  });
-  renderAlerts();
-  alert('✅ Live feed updated on Dashboard!');
-}
-
-function clearFeed() {
-  if(confirm('Clear all feed entries?')) {
-    alertMessages.length = 0;
-    renderAlerts();
-    renderFeedEditor();
-  }
-}
-
-function saveStats() {
-  const chats = document.getElementById('edit-stat-chats').value.trim();
-  const time = document.getElementById('edit-stat-time').value.trim();
-  const csat = document.getElementById('edit-stat-csat').value.trim();
-  const streak = document.getElementById('edit-stat-streak').value.trim();
-  if(chats) document.getElementById('stat-chats').textContent = chats;
-  if(time) document.getElementById('stat-time').textContent = time;
-  if(csat) document.getElementById('stat-csat').textContent = csat;
-  if(streak) document.getElementById('stat-streak').textContent = streak;
-  alert('✅ Dashboard stats updated!');
-}
-
-function addReward() {
-  const icon = document.getElementById('new-reward-icon').value.trim() || '🎁';
-  const name = document.getElementById('new-reward-name').value.trim();
-  const desc = document.getElementById('new-reward-desc').value.trim();
-  const cost = parseInt(document.getElementById('new-reward-cost').value)||100;
-  if(!name) { alert('Enter reward name'); return; }
-  rewards.push({ icon, name, desc, cost });
-  renderRewards();
-  renderRewardEditor();
-  document.getElementById('new-reward-icon').value='';
-  document.getElementById('new-reward-name').value='';
-  document.getElementById('new-reward-desc').value='';
-  document.getElementById('new-reward-cost').value='';
-}
-
-function deleteReward(i) { rewards.splice(i,1); renderRewards(); renderRewardEditor(); }
-
-function saveRewards() { renderRewards(); alert('✅ Reward store updated!'); }
-
-function startBattle() {
-  const opponents = agents.filter(a=>a.name!=='Mihail');
-  if(!opponents.length) { alert('No opponents available!'); return; }
-  const opp = opponents[Math.floor(Math.random()*opponents.length)];
-  if(walletCoins < 50) { alert('Need 50 coins to start a battle!'); return; }
-  walletCoins -= 50; updateWallet();
-  battles.unshift({ a:'Mihail', ae:'🎯', ascore:0, b:opp.name, be:opp.emoji, bscore:0, goal:'First to 10 chats wins', acoins:50, bcoins:50 });
-  renderBattles();
-  showView('battles');
-  alert(`⚔️ Battle started vs ${opp.name}! First to 10 chats wins 100 coins.`);
-}
-
-// ===================== LIVE SIMULATION =====================
-function simulateActivity() {
-  const agent = agents[Math.floor(Math.random()*agents.length)];
-  agent.chats += Math.floor(Math.random()*2);
-  agent.score += Math.floor(Math.random()*14)+4;
-  agent.coins += Math.floor(Math.random()*8);
-  const totalChats = agents.reduce((s,a)=>s+a.chats,0);
-  const el = document.getElementById('stat-chats');
-  if(el) el.textContent = totalChats.toLocaleString();
-  const msgs = [
-    { icon:'⚡', msg:`<strong>${agent.name}</strong> just resolved a chat — score up!`, time:'just now' },
-    { icon:'🎯', msg:`<strong>${agent.name}</strong> is climbing the leaderboard`, time:'just now' },
-    { icon:'⭐', msg:`New 5⭐ rating for <strong>${agent.name}</strong>!`, time:'just now' },
-    { icon:'🦏', msg:`<strong>${agent.name}</strong> earned coins for fast response!`, time:'just now' },
-  ];
-  alertMessages.unshift(msgs[Math.floor(Math.random()*msgs.length)]);
-  if(alertMessages.length > 14) alertMessages.pop();
-  renderLeaderboard();
-  renderAlerts();
-}
-
-// ===================== INIT =====================
-renderLeaderboard();
-renderCompetitions();
-renderMissions();
-renderBattles();
-renderRewards();
-renderAlerts();
-setInterval(simulateActivity, 8000);
 </script>
 </body>
 </html>
