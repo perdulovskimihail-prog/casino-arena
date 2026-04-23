@@ -703,7 +703,6 @@ async function loadBattles() {
 }
 
 async function loadRewards() {
-  const { data } = await sb.from('rewards').select('*').where ? null : await sb.from('rewards').select('*').order('cost');
   const { data: rd } = await sb.from('rewards').select('*').order('cost');
   rewards = rd || [];
   renderRewards();
@@ -738,54 +737,123 @@ function setText(id, val) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// REAL-TIME SUBSCRIPTIONS
+// REAL-TIME SUBSCRIPTIONS + POLLING FALLBACK
 // ═══════════════════════════════════════════════════════════
-function subscribeRealtime() {
-  // Agents
-  sb.channel('agents-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => loadAgents())
-    .subscribe();
+let realtimeChannel = null;
+let pollInterval    = null;
+let realtimeWorking = false;
+let lastAgentHash   = '';
+let lastFeedHash    = '';
 
-  // Feed
-  sb.channel('feed-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_entries' }, () => loadFeed())
-    .subscribe();
+function subscribeRealtime() {
+  // Remove any existing channel cleanly
+  if (realtimeChannel) {
+    sb.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+
+  // Single channel for ALL tables — more reliable than multiple channels
+  realtimeChannel = sb.channel('rhino-all-changes', {
+    config: { broadcast: { self: true } }
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' },
+    payload => { handleAgentChange(payload); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_entries' },
+    () => { loadFeed(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_stats' },
+    payload => { if (payload.new) applyStats(payload.new); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'competitions' },
+    () => { loadCompetitions(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' },
+    () => { loadMissions(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'battles' },
+    () => { loadBattles(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' },
+    () => { loadRewards(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet' },
+    payload => { if (payload.new) { walletCoins = payload.new.coins; updateWallet(); } })
+  .subscribe((status, err) => {
+    if (status === 'SUBSCRIBED') {
+      realtimeWorking = true;
+      setConnectionDot('connected');
+      stopPolling(); // realtime is working, no need to poll
+      console.log('✅ Realtime connected');
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      realtimeWorking = false;
+      setConnectionDot('error');
+      console.warn('⚠️ Realtime failed, switching to polling fallback. Status:', status);
+      startPolling();
+      // Try to reconnect after 10s
+      setTimeout(() => subscribeRealtime(), 10000);
+    }
+  });
+
+  // Always start polling as immediate fallback — realtime will stop it if it connects
+  startPolling();
+}
+
+// ── Handle individual agent change without full reload ──────
+function handleAgentChange(payload) {
+  if (payload.eventType === 'UPDATE' && payload.new) {
+    const updated = payload.new;
+    const idx = agents.findIndex(a => a.id === updated.id);
+    if (idx !== -1) {
+      agents[idx] = { ...agents[idx], ...updated };
+    } else {
+      agents.push(updated);
+    }
+    renderLeaderboard();
+    renderScorecard();
+  } else {
+    // INSERT or DELETE — do a full reload
+    loadAgents();
+  }
+}
+
+// ── Polling fallback — fetches every 3 seconds ──────────────
+function startPolling() {
+  if (pollInterval) return; // already polling
+  console.log('🔄 Polling fallback active (every 3s)');
+  pollInterval = setInterval(async () => {
+    try {
+      await pollForChanges();
+    } catch(e) {
+      console.warn('Poll error:', e);
+    }
+  }, 3000);
+}
+
+function stopPolling() {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+    console.log('⏹ Polling stopped — realtime is active');
+  }
+}
+
+async function pollForChanges() {
+  // Agents — check hash to avoid unnecessary re-renders
+  const { data: agData } = await sb.from('agents').select('id,score,coins,chats,csat,rt').order('score', { ascending: false });
+  if (agData) {
+    const hash = JSON.stringify(agData.map(a => `${a.id}:${a.score}:${a.coins}:${a.chats}`));
+    if (hash !== lastAgentHash) {
+      lastAgentHash = hash;
+      await loadAgents();
+    }
+  }
+
+  // Feed — check for new entries
+  const { data: feedData } = await sb.from('feed_entries').select('id').order('created_at', { ascending: false }).limit(5);
+  if (feedData) {
+    const hash = feedData.map(f => f.id).join(',');
+    if (hash !== lastFeedHash) {
+      lastFeedHash = hash;
+      await loadFeed();
+    }
+  }
 
   // Stats
-  sb.channel('stats-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_stats' }, payload => {
-      if (payload.new) applyStats(payload.new);
-    })
-    .subscribe();
-
-  // Competitions
-  sb.channel('comp-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'competitions' }, () => loadCompetitions())
-    .subscribe();
-
-  // Missions
-  sb.channel('miss-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, () => loadMissions())
-    .subscribe();
-
-  // Battles
-  sb.channel('battles-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'battles' }, () => loadBattles())
-    .subscribe();
-
-  // Rewards
-  sb.channel('rewards-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, () => loadRewards())
-    .subscribe();
-
-  // Wallet
-  sb.channel('wallet-rt')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet' }, payload => {
-      if (payload.new) { walletCoins = payload.new.coins; updateWallet(); }
-    })
-    .subscribe();
-
-  setConnectionDot('connected');
+  await loadStats();
 }
 
 // ═══════════════════════════════════════════════════════════
